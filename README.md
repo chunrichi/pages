@@ -2,6 +2,8 @@
 
 一个跑在**项目级 GitHub Pages** 上的可交互原型展厅。每个原型独立存在、独立运行；展厅只做索引、筛选和陈列。
 
+> 线上：<https://chunrichi.github.io/pages/> · 仓库：<https://github.com/chunrichi/pages>
+
 - 明亮、安静的外壳，轻量动画：首屏拼贴、标题描线、滚动 reveal、卡片悬浮、展台转场
 - 原型通过 `<iframe>` 隔离，任何技术栈、任何视觉风格都能原样陈列
 - 纯静态、零构建、零运行时依赖；展厅本身可离线打开
