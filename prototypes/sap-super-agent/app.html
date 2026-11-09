@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SAP Super Agent · 交付工作台</title>
+<meta name="description" content="SAP Super Agent 重构原型：需求、AI 澄清、过程文档、CRQ、ChaRM、Agent 队列与 VSCode 协作。" />
+<link rel="stylesheet" href="assets/tokens.css" />
+<link rel="stylesheet" href="assets/base.css" />
+<link rel="stylesheet" href="assets/components.css" />
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body class="app-body">
+
+<div class="app" id="app" data-shell="app">
+
+  <!-- ======================= SIDEBAR ======================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+      <a class="brand" href="#/home" aria-label="SAP Super Agent 首页">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5 12 3l7 4.5v9L12 21l-7-4.5v-9Z" stroke="currentColor" stroke-width="1.6"/><path d="M8.6 10.2c1.9-1.3 4.9-1.3 6.8 0M8.6 13.8c1.9 1.3 4.9 1.3 6.8 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </span>
+        <span class="brand__text">
+          <span class="brand__name">Super Agent</span>
+          <span class="brand__sub">SAP 交付工作台</span>
+        </span>
+      </a>
+      <button class="icon-btn icon-btn--sm sidebar__collapse tooltip" data-tip="收起侧栏 ( [ )" data-action="toggle-sidebar" aria-label="切换侧栏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+    </div>
+
+    <a class="group-switch group-switch--static" id="group-switch" href="#/settings?tab=groups" aria-label="查看小组管理">
+      <span class="group-switch__icon">FIN</span>
+      <span class="group-switch__meta">
+        <span class="group-switch__name">财务共享组</span>
+        <span class="group-switch__sub">FIN-SH · 12 位成员 · 我的小组</span>
+      </span>
+      <span class="group-switch__manage" data-icon="settings"></span>
+    </a>
+
+    <button class="btn btn--primary sidebar__new" data-action="new-demand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      新建需求
+      <kbd>N</kbd>
+    </button>
+
+    <nav class="nav" aria-label="主导航">
+      <div class="nav__group">
+        <div class="nav__label">工作台</div>
+        <a class="nav__item" data-nav="home" href="#/home"><span class="nav__icon" data-icon="home"></span><span class="nav__text">总览</span><span class="nav__badge" data-badge="inbox">2</span></a>
+        <a class="nav__item" data-nav="demands" href="#/demands"><span class="nav__icon" data-icon="layers"></span><span class="nav__text">需求</span><span class="nav__badge">6</span></a>
+        <a class="nav__item" data-nav="tasks" href="#/tasks"><span class="nav__icon" data-icon="inbox"></span><span class="nav__text">任务台</span><span class="nav__badge" data-badge="tasks">3</span></a>
+      </div>
+
+      <div class="nav__group">
+        <div class="nav__label">交付工具</div>
+        <a class="nav__item" data-nav="crq" href="#/tools/crq"><span class="nav__icon" data-icon="file-text"></span><span class="nav__text">CRQ 工单</span></a>
+        <a class="nav__item" data-nav="charm" href="#/tools/charm"><span class="nav__icon" data-icon="git-branch"></span><span class="nav__text">ChaRM 变更</span></a>
+        <a class="nav__item" data-nav="docs" href="#/demands/R-2041/doc/requirement-analysis"><span class="nav__icon" data-icon="book-open"></span><span class="nav__text">文档评审</span></a>
+      </div>
+
+      <div class="nav__group">
+        <div class="nav__label">自动化</div>
+        <a class="nav__item" data-nav="queue" href="#/ops/queue"><span class="nav__icon" data-icon="activity"></span><span class="nav__text">队列与事件</span><span class="nav__dot"></span></a>
+        <a class="nav__item" data-nav="agents" href="#/ops/agents"><span class="nav__icon" data-icon="bot"></span><span class="nav__text">Agent 运行</span></a>
+      </div>
+
+      <div class="nav__group">
+        <div class="nav__label">空间</div>
+        <a class="nav__item" data-nav="knowledge" href="#/knowledge"><span class="nav__icon" data-icon="database"></span><span class="nav__text">知识库</span></a>
+        <a class="nav__item" data-nav="settings" href="#/settings"><span class="nav__icon" data-icon="settings"></span><span class="nav__text">集成与设置</span></a>
+      </div>
+    </nav>
+
+    <div class="sidebar__foot">
+      <div class="executor-card">
+        <div class="executor-card__head">
+          <span class="live-dot">VSCode</span>
+          <span class="executor-card__num">2 在线</span>
+        </div>
+        <div class="executor-card__hub">
+          <span class="executor-card__pill"><i></i>周予 · laptop-fink</span>
+          <span class="executor-card__pill"><i></i>沈珂 · WSL-02</span>
+        </div>
+      </div>
+      <a class="user-card" href="#/settings?tab=security" aria-label="账户与设备">
+        <span class="avatar avatar--sm" data-tone="ink">陈</span>
+        <span class="user-card__meta">
+          <span class="user-card__name">陈曦</span>
+          <span class="user-card__role">财务共享组 · SAP 业务</span>
+        </span>
+        <span class="user-card__chev" data-icon="chevrons-right"></span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="sidebar-scrim" data-action="close-sidebar" aria-hidden="true"></div>
+
+  <!-- ======================= MAIN ======================= -->
+  <div class="main" id="main">
+    <header class="topbar" id="topbar">
+      <div class="topbar__left">
+        <button class="icon-btn topbar__menu" data-action="toggle-sidebar" aria-label="菜单"><span data-icon="menu"></span></button>
+        <div class="crumb" id="crumb">
+          <span class="crumb__root">Super Agent</span>
+          <span class="crumb__sep">/</span>
+          <span class="crumb__now">总览</span>
+        </div>
+      </div>
+      <div class="topbar__center">
+        <button class="search-trigger" data-action="command">
+          <span data-icon="search"></span>
+          <span class="search-trigger__text">搜索需求、文档、CRQ、变更…</span>
+          <span class="search-trigger__keys"><kbd>⌘</kbd><kbd>K</kbd></span>
+        </button>
+      </div>
+      <div class="topbar__right">
+        <div class="role-switch" role="group" aria-label="切换视角">
+          <button data-role="business" class="is-active">SAP 业务</button>
+          <button data-role="it">SAP IT</button>
+        </div>
+        <span class="topbar__sep"></span>
+        <button class="icon-btn tooltip" data-action="notifications" data-tip="通知" aria-label="通知">
+          <span data-icon="bell"></span>
+          <span class="bell-dot"></span>
+        </button>
+        <button class="icon-btn tooltip" data-action="help" data-tip="帮助与快捷键" aria-label="帮助">
+          <span data-icon="life-buoy"></span>
+        </button>
+        <button class="topbar__avatar" data-action="profile" aria-label="账户菜单">
+          <span class="avatar avatar--sm" data-tone="ink">陈</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="view" id="view" tabindex="-1" aria-live="polite">
+      <div class="view-loading">
+        <div class="view-loading__bar shimmer"></div>
+        <div class="view-loading__bar shimmer" style="width:60%"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ======================= AUTH LAYOUT ======================= -->
+<div class="auth" id="auth" hidden></div>
+
+<!-- ======================= OVERLAYS ======================= -->
+<div class="scrim" id="scrim" data-action="close-overlays"></div>
+
+<aside class="drawer" id="notification-drawer" aria-label="通知中心">
+  <div class="drawer__head">
+    <div class="grow">
+      <div class="drawer__title">通知</div>
+      <div class="sm">2 项待处理 · 4 条未读</div>
+    </div>
+    <button class="btn btn--sm btn--ghost" data-action="mark-all-read">全部已读</button>
+    <button class="icon-btn icon-btn--sm" data-action="close-overlays" aria-label="关闭"><span data-icon="x"></span></button>
+  </div>
+  <div class="notif-tabs tabs" role="tablist">
+    <button class="tab is-active" data-notif-tab="todo">待处理 <span class="count">2</span></button>
+    <button class="tab" data-notif-tab="all">全部</button>
+  </div>
+  <div class="drawer__body notif-list" id="notif-list"></div>
+  <div class="drawer__foot">
+    <a class="link" href="#/settings?tab=notify">通知与订阅设置 <span data-icon="arrow-right"></span></a>
+  </div>
+</aside>
+
+<div class="modal" id="command-modal" role="dialog" aria-label="命令面板">
+  <div class="cmd">
+    <div class="cmd__input">
+      <span data-icon="search"></span>
+      <input id="cmd-input" class="cmd__field" placeholder="搜索或输入命令…" autocomplete="off" />
+      <kbd>ESC</kbd>
+    </div>
+    <div class="cmd__body" id="cmd-results"></div>
+    <div class="cmd__foot">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span class="grow"></span>
+      <span>需求 · 文档 · 命令</span>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-generic" role="dialog" aria-modal="true">
+  <div class="modal__head">
+    <div class="modal__title" id="modal-title">确认操作</div>
+    <div class="modal__desc" id="modal-desc"></div>
+  </div>
+  <div class="modal__body" id="modal-body"></div>
+  <div class="modal__foot" id="modal-foot"></div>
+</div>
+
+<div class="drawer drawer--wide" id="detail-drawer" aria-label="详情">
+  <div class="drawer__head">
+    <div class="grow">
+      <div class="drawer__title" id="detail-title">详情</div>
+      <div class="sm mono" id="detail-sub"></div>
+    </div>
+    <button class="icon-btn icon-btn--sm" data-action="close-overlays" aria-label="关闭"><span data-icon="x"></span></button>
+  </div>
+  <div class="drawer__body" id="detail-body"></div>
+  <div class="drawer__foot" id="detail-foot"></div>
+</div>
+
+<div class="profile-menu popover" id="profile-menu" hidden></div>
+<div class="toast-stack" id="toast-stack"></div>
+
+<script src="assets/icons.js"></script>
+<script>
+  /* namespace available to screen modules before the runtime boots */
+  window.SA = window.SA || {};
+  SA.screens = SA.screens || {};
+  SA.data = SA.data || {};
+  SA.register = SA.register || function (name, spec) { SA.screens[name] = spec; };
+</script>
+<script src="screens/auth.js"></script>
+<script src="screens/home.js"></script>
+<script src="screens/demands.js"></script>
+<script src="screens/new-demand.js"></script>
+<script src="screens/demand-detail.js"></script>
+<script src="screens/doc-review.js"></script>
+<script src="screens/release.js"></script>
+<script src="screens/tasks.js"></script>
+<script src="screens/crq.js"></script>
+<script src="screens/charm.js"></script>
+<script src="screens/ops.js"></script>
+<script src="screens/settings.js"></script>
+<script src="screens/knowledge.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

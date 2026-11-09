@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SAP Super Agent · 界面重构设计</title>
+<meta name="description" content="SAP 交付工作台的界面重构方案：需求、AI 澄清、过程文档、CRQ/ChaRM、VSCode 协作与上线审批的统一设计。" />
+<link rel="stylesheet" href="assets/tokens.css" />
+<link rel="stylesheet" href="assets/base.css" />
+<link rel="stylesheet" href="assets/components.css" />
+<link rel="stylesheet" href="assets/index.css" />
+</head>
+<body class="site">
+
+<header class="site-nav">
+  <a class="site-brand" href="index.html">
+    <span class="brand__mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5 12 3l7 4.5v9L12 21l-7-4.5v-9Z" stroke="currentColor" stroke-width="1.6"/><path d="M8.6 10.2c1.9-1.3 4.9-1.3 6.8 0M8.6 13.8c1.9 1.3 4.9 1.3 6.8 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </span>
+    <span class="site-brand__text">
+      <span class="site-brand__name">SAP Super Agent</span>
+      <span class="site-brand__sub">界面重构设计 · 2026</span>
+    </span>
+  </a>
+  <nav class="site-nav__links" aria-label="页面导航">
+    <a href="#principles">设计原则</a>
+    <a href="#flow">流程</a>
+    <a href="#screens">界面</a>
+    <a href="#system">设计系统</a>
+    <a href="#docs">文档</a>
+  </nav>
+  <div class="site-nav__actions">
+    <a class="btn btn--sm" href="app.html">进入 Web 原型</a>
+    <a class="btn btn--sm btn--primary" href="vscode.html">VSCode 插件</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero__grid">
+      <div class="hero__copy">
+        <div class="hero__kicker"><i></i>SAP DELIVERY WORKSPACE · UI REFACTOR</div>
+        <h1>把 SAP 交付的<br />每一个过程，<br /><span class="hero__mark">放在同一条线上。</span></h1>
+        <p class="hero__lead">从设备绑定、需求澄清、过程文档，到 CRQ、ChaRM 与 VSCode 开发，再到上线审批。重构后的工作台把业务、IT 与 Super Agent 放进同一个可追溯的界面。</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary btn--lg" href="app.html">打开 Web 工作台 <span class="mono">→</span></a>
+          <a class="btn btn--lg" href="vscode.html">查看 VSCode 插件</a>
+          <a class="hero__textlink" href="#screens">浏览全部界面 <span>↓</span></a>
+        </div>
+        <div class="hero__meta">
+          <span><b>28</b> 个界面</span>
+          <span><b>8</b> 个 VSCode 视图</span>
+          <span><b>01</b> 套设计系统</span>
+          <span><b>2026</b> v2.0</span>
+        </div>
+      </div>
+
+      <div class="hero__visual" aria-label="工作台总览预览">
+        <div class="hero-glow"></div>
+        <div class="browser">
+          <div class="browser__bar">
+            <span class="browser__dots"><i></i><i></i><i></i></span>
+            <span class="browser__url">superagent.sap.example / 总览</span>
+            <span class="browser__tag">LIVE PROTOTYPE</span>
+          </div>
+          <div class="browser__shot">
+            <img src="screenshots/home.png" alt="SAP Super Agent 工作台总览" />
+          </div>
+        </div>
+        <div class="float float--ai">
+          <span class="float__icon float__icon--teal">✦</span>
+          <span><b>Super Agent 运行中</b><em>技术设计 · R-2042 · 64%</em></span>
+          <span class="float__bar"><i></i></span>
+        </div>
+        <div class="float float--gate">
+          <span class="float__icon float__icon--amber">◉</span>
+          <span><b>G1 待确认</b><em>功能设计 v2 · 3 项检查</em></span>
+        </div>
+        <div class="float float--queue">
+          <span class="live-dot">队列健康</span>
+          <span class="float__nums"><b>24</b><em>待处理</em></span>
+          <span class="float__nums"><b>99.2%</b><em>成功率</em></span>
+        </div>
+      </div>
+    </div>
+    <div class="hero__ticker">
+      <div class="hero__ticker-track">
+        <span>需求澄清</span><i></i><span>知识库检索</span><i></i><span>过程文档</span><i></i><span>CRQ 编排</span><i></i><span>ChaRM Basis 审批</span><i></i><span>VSCode 上下文包</span><i></i><span>Agent 队列</span><i></i><span>上线审批</span><i></i>
+        <span>需求澄清</span><i></i><span>知识库检索</span><i></i><span>过程文档</span><i></i><span>CRQ 编排</span><i></i><span>ChaRM Basis 审批</span><i></i><span>VSCode 上下文包</span><i></i><span>Agent 队列</span><i></i><span>上线审批</span><i></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRINCIPLES ============ -->
+  <section class="section principles" id="principles">
+    <div class="section-head site-section-head" data-reveal>
+      <div>
+        <div class="eyebrow">01 / PRINCIPLES</div>
+        <h2>一条线，<br />而不是一堆工具。</h2>
+      </div>
+      <p>现状里，需求在 SAP、澄清在邮件、工单在 SolMan、开发在 VSCode、审批在 Teams。重构的第一件事，是把状态与上下文收回到一个连续界面里。</p>
+    </div>
+    <div class="principles__grid">
+      <article class="principle" data-reveal>
+        <span class="principle__n">01</span>
+        <div class="principle__icon"><span data-icon="route"></span></div>
+        <h3>一条链路</h3>
+        <p>需求、阶段、文档、工单与审批共享同一组 ID 与事件时间线。任何界面都能回到需求本身。</p>
+      </article>
+      <article class="principle" data-reveal>
+        <span class="principle__n">02</span>
+        <div class="principle__icon"><span data-icon="feather"></span></div>
+        <h3>安静的界面</h3>
+        <p>纸张感的浅色底、细分隔线与克制的色彩。颜色只用于表达状态，不用来装饰。</p>
+      </article>
+      <article class="principle" data-reveal>
+        <span class="principle__n">03</span>
+        <div class="principle__icon"><span data-icon="fingerprint"></span></div>
+        <h3>处处可追溯</h3>
+        <p>一次性链接、指纹绑定、工件版本、门禁决策、接口调用与 Agent 运行都留下不可变记录。</p>
+      </article>
+      <article class="principle" data-reveal>
+        <span class="principle__n">04</span>
+        <div class="principle__icon"><span data-icon="sparkles"></span></div>
+        <h3>AI 不抢戏</h3>
+        <p>AI 推进文档、检索知识库、准备工单，但每个关键门禁都由人确认。人始终拥有最后一步。</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ FLOW ============ -->
+  <section class="section flow" id="flow">
+    <div class="section-head site-section-head" data-reveal>
+      <div>
+        <div class="eyebrow">02 / THE THREAD</div>
+        <h2>一次需求，<br />如何穿过整个组织。</h2>
+      </div>
+      <p>角色与系统被串成一条流水线。每一步的产出都成为下一步的输入，失败与等待在同一个地方可见。</p>
+    </div>
+    <div class="flowline" data-reveal>
+      <div class="flowline__rail"><i></i><i></i><i></i></div>
+      <div class="flowline__nodes">
+        <div class="flow-node">
+          <span class="flow-node__index">01</span>
+          <span class="flow-node__icon" data-icon="user"></span>
+          <h3>SAP 业务提需求</h3>
+          <p>指定负责人、描述问题、上传附件。设备通过一次性链接绑定后免登录。</p>
+          <span class="flow-node__tag">表单 / 附件 / 负责人</span>
+        </div>
+        <div class="flow-node">
+          <span class="flow-node__index">02</span>
+          <span class="flow-node__icon flow-node__icon--teal" data-icon="sparkles"></span>
+          <h3>AI 澄清与文档</h3>
+          <p>检索知识库，生成澄清问题与过程文档。门禁由人确认，版本不可变。</p>
+          <span class="flow-node__tag">RAG / 过程文档 / 门禁</span>
+        </div>
+        <div class="flow-node">
+          <span class="flow-node__index">03</span>
+          <span class="flow-node__icon flow-node__icon--blue" data-icon="code"></span>
+          <h3>SAP IT 在 VSCode 开发</h3>
+          <p>任务被派发到在线工作区，上下文包与 Agent / Skill 自动同步到本地。</p>
+          <span class="flow-node__tag">Extension / 上下文包 / Agent</span>
+        </div>
+        <div class="flow-node">
+          <span class="flow-node__index">04</span>
+          <span class="flow-node__icon flow-node__icon--violet" data-icon="git-branch"></span>
+          <h3>CRQ 与 ChaRM</h3>
+          <p>模板驱动的多接口编排创建外部工单；Change Request 等待 Basis 审批。</p>
+          <span class="flow-node__tag">模板 / 编排 / Basis</span>
+        </div>
+        <div class="flow-node">
+          <span class="flow-node__index">05</span>
+          <span class="flow-node__icon flow-node__icon--amber" data-icon="upload"></span>
+          <h3>上线与审批</h3>
+          <p>上线文档生成后邮件通知业务确认，确认后提交 CRQ，所有投递可查。</p>
+          <span class="flow-node__tag">上线文档 / 邮件 / CRQ</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCREENS ============ -->
+  <section class="section screens" id="screens">
+    <div class="section-head site-section-head" data-reveal>
+      <div>
+        <div class="eyebrow">03 / INTERFACES</div>
+        <h2>全部界面，<br />同一套语言。</h2>
+      </div>
+      <p>Web 工作台覆盖业务与 IT 两种角色；VSCode 扩展把需求上下文与 Agent 能力带到开发者手边。点击任意卡片可直接进入可交互原型。</p>
+    </div>
+
+    <div class="screen-filters" data-reveal>
+      <button class="chip is-active" data-filter="all">全部 <span class="mono">14</span></button>
+      <button class="chip" data-filter="onboard">注册与绑定</button>
+      <button class="chip" data-filter="demand">需求与澄清</button>
+      <button class="chip" data-filter="doc">文档与上线</button>
+      <button class="chip" data-filter="delivery">交付工具</button>
+      <button class="chip" data-filter="ops">自动化</button>
+      <span class="grow"></span>
+      <span class="sm mono" style="color:var(--ink-4)">WEB · 1440 × 900</span>
+    </div>
+
+    <div class="screen-grid" id="screen-grid">
+      <a class="screen-card" data-group="onboard" href="app.html#/welcome">
+        <div class="screen-card__shot"><img src="screenshots/auth-welcome.png" alt="注册与账号绑定" loading="lazy" /><span class="screen-card__badge">AUTH</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">01</span><h3>注册与账号绑定</h3><span class="screen-card__arrow">↗</span></div>
+        <p>邮箱邀请、一次性链接、浏览器指纹与 IP 校验，绑定后设备免登录。</p>
+      </a>
+      <a class="screen-card" data-group="onboard" href="app.html#/bind">
+        <div class="screen-card__shot"><img src="screenshots/auth-bind.png" alt="设备绑定" loading="lazy" /><span class="screen-card__badge">AUTH</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">02</span><h3>设备绑定</h3><span class="screen-card__arrow">↗</span></div>
+        <p>逐项展示链接、指纹、IP、用户名的校验过程，绑定结果清晰可见。</p>
+      </a>
+      <a class="screen-card" data-group="demand" href="app.html#/home">
+        <div class="screen-card__shot"><img src="screenshots/home.png" alt="工作台总览" loading="lazy" /><span class="screen-card__badge">HOME</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">03</span><h3>工作台总览</h3><span class="screen-card__arrow">↗</span></div>
+        <p>待确认、AI 运行、上线窗口与队列健康集中在一个安静的首屏。</p>
+      </a>
+      <a class="screen-card" data-group="demand" href="app.html#/demands">
+        <div class="screen-card__shot"><img src="screenshots/demands-backlog.png" alt="需求 Backlog" loading="lazy" /><span class="screen-card__badge">DEMANDS</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">04</span><h3>需求与 JIRA Backlog</h3><span class="screen-card__arrow">↗</span></div>
+        <p>列表、看板、Backlog 三种视图；JIRA 双向同步，可直接排期。</p>
+      </a>
+      <a class="screen-card" data-group="demand" href="app.html#/demands/new?step=1">
+        <div class="screen-card__shot"><img src="screenshots/new-demand-2.png" alt="AI 澄清" loading="lazy" /><span class="screen-card__badge">AI</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">05</span><h3>AI 澄清与知识库</h3><span class="screen-card__arrow">↗</span></div>
+        <p>结合历史需求与规范生成澄清问题，每个结论都可追溯到引用来源。</p>
+      </a>
+      <a class="screen-card" data-group="demand" href="app.html#/demands/R-2041">
+        <div class="screen-card__shot"><img src="screenshots/demand-detail.png" alt="需求详情" loading="lazy" /><span class="screen-card__badge">DETAIL</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">06</span><h3>需求详情</h3><span class="screen-card__arrow">↗</span></div>
+        <p>六阶段推进、过程文档、门禁与关联 CRQ / ChaRM 在同一条时间线上。</p>
+      </a>
+      <a class="screen-card" data-group="doc" href="app.html#/demands/R-2041/doc/functional-design">
+        <div class="screen-card__shot"><img src="screenshots/doc-review.png" alt="文档评审" loading="lazy" /><span class="screen-card__badge">REVIEW</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">07</span><h3>文档评审</h3><span class="screen-card__arrow">↗</span></div>
+        <p>参考 Plannotator 的轻量批注：行内标记、版本对比、门禁检查与 AI 建议。</p>
+      </a>
+      <a class="screen-card" data-group="doc" href="app.html#/demands/R-2045/release">
+        <div class="screen-card__shot"><img src="screenshots/release.png" alt="上线与审批" loading="lazy" /><span class="screen-card__badge">RELEASE</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">08</span><h3>上线文档与审批</h3><span class="screen-card__arrow">↗</span></div>
+        <p>上线清单、传输、回滚方案与业务邮件审批，确认后提交 CRQ。</p>
+      </a>
+      <a class="screen-card" data-group="delivery" href="app.html#/tasks">
+        <div class="screen-card__shot"><img src="screenshots/tasks.png" alt="SAP IT 任务台" loading="lazy" /><span class="screen-card__badge">TASKS</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">09</span><h3>SAP IT 任务台</h3><span class="screen-card__arrow">↗</span></div>
+        <p>可领取、进行中、等待回答与已完成；租约、执行器与上下文包一屏可见。</p>
+      </a>
+      <a class="screen-card" data-group="delivery" href="app.html#/tools/crq/new">
+        <div class="screen-card__shot"><img src="screenshots/crq-new.png" alt="CRQ 编排" loading="lazy" /><span class="screen-card__badge">CRQ</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">10</span><h3>CRQ 模板与编排</h3><span class="screen-card__arrow">↗</span></div>
+        <p>模板按小组与版本管理；接口不完整的字段通过多步编排补齐，过程可重试。</p>
+      </a>
+      <a class="screen-card" data-group="delivery" href="app.html#/tools/charm">
+        <div class="screen-card__shot"><img src="screenshots/charm.png" alt="ChaRM 变更" loading="lazy" /><span class="screen-card__badge">CHARM</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">11</span><h3>ChaRM 变更中心</h3><span class="screen-card__arrow">↗</span></div>
+        <p>Change Request、Basis 审批、Change Document 与轮询状态同步。</p>
+      </a>
+      <a class="screen-card" data-group="ops" href="app.html#/ops/queue">
+        <div class="screen-card__shot"><img src="screenshots/queue.png" alt="队列与事件" loading="lazy" /><span class="screen-card__badge">OPS</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">12</span><h3>队列与事件</h3><span class="screen-card__arrow">↗</span></div>
+        <p>队列深度、事件流、Webhook 投递、外部 API 与死信，全部实时可查。</p>
+      </a>
+      <a class="screen-card" data-group="ops" href="app.html#/ops/agents">
+        <div class="screen-card__shot"><img src="screenshots/agents.png" alt="Agent 运行" loading="lazy" /><span class="screen-card__badge">AGENT</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">13</span><h3>Agent 运行</h3><span class="screen-card__arrow">↗</span></div>
+        <p>执行计划、工具调用、tokens 与成本；失败可从检查点重试。</p>
+      </a>
+      <a class="screen-card" data-group="ops" href="app.html#/settings">
+        <div class="screen-card__shot"><img src="screenshots/settings.png" alt="集成与设置" loading="lazy" /><span class="screen-card__badge">SETTINGS</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">14</span><h3>集成与安全</h3><span class="screen-card__arrow">↗</span></div>
+        <p>Teams、SMTP、JIRA、SolMan、ChaRM 与 AI 网关的连接状态；设备与通知策略。</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ VSCODE ============ -->
+  <section class="section vscode" id="vscode">
+    <div class="section-head site-section-head" data-reveal>
+      <div>
+        <div class="eyebrow">04 / VSCode EXTENSION</div>
+        <h2>开发者的手边，<br />也是同一条线。</h2>
+      </div>
+      <p>不是聊天机器人，而是任务客户端 + 本地能力宿主。任务箱、需求详情、文档同步、Agent/Skill、ChaRM SSO 与 Copilot 协作都在编辑器里完成。</p>
+    </div>
+    <div class="vscode-showcase" data-reveal>
+      <div class="vscode-showcase__visual">
+        <div class="vscode-frame">
+          <img id="vs-shot" src="screenshots/vscode-plan.png" alt="VSCode 扩展任务箱" />
+        </div>
+        <div class="vscode-tabs" role="tablist">
+          <button class="is-active" data-vs="plan" data-caption="任务箱 · 可领取 / 我的任务 / 等待我回答">任务箱</button>
+          <button data-vs="task" data-caption="需求详情 · 阶段、文档与上下文包">需求详情</button>
+          <button data-vs="docs" data-caption="文档同步 · 拉取 / 推送 / 冲突">文档同步</button>
+          <button data-vs="agents" data-caption="Agents &amp; Skills · 团队共享与本地草稿">Agents</button>
+          <button data-vs="charm" data-caption="ChaRM &amp; SSO · 本地身份申请 CR">ChaRM</button>
+          <button data-vs="chat" data-caption="Copilot 协作 · Extension Tools">Copilot</button>
+          <button data-vs="sync" data-caption="同步与冲突 · 显式合并">冲突</button>
+          <button data-vs="states" data-caption="状态与命令 · 六个命令覆盖全部操作">状态</button>
+        </div>
+        <div class="vscode-caption"><span class="live-dot">live</span><span id="vs-caption">任务箱 · 可领取 / 我的任务 / 等待我回答</span></div>
+      </div>
+      <aside class="vscode-showcase__side">
+        <div class="vs-facts">
+          <div><span class="mono">01</span><b>任务箱</b><p>可领取 / 我的任务 / 等待我回答。WS 推送实时刷新，离线不派单。</p></div>
+          <div><span class="mono">02</span><b>需求详情</b><p>阅读阶段文档、验收标准，生成 worktree 与上下文包，一键递给 Copilot。</p></div>
+          <div><span class="mono">03</span><b>文档同步</b><p>本地修改推送生成新版本；服务端更新可拉取；冲突显式合并。</p></div>
+          <div><span class="mono">04</span><b>Agents &amp; Skills</b><p>团队共享 Agent / Skill 版本，本地草稿可推送，来源可追溯。</p></div>
+          <div><span class="mono">05</span><b>ChaRM &amp; SSO</b><p>使用本机 Windows SSO 申请 CR；凭据可用不可见，不上传服务端。</p></div>
+          <div><span class="mono">06</span><b>Copilot 协作</b><p>Extension Tools 读写任务、上报进度、提交工件，写操作需确认。</p></div>
+        </div>
+        <a class="btn btn--primary" href="vscode.html">打开完整插件原型 <span class="mono">→</span></a>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ DESIGN SYSTEM ============ -->
+  <section class="section system" id="system">
+    <div class="section-head site-section-head" data-reveal>
+      <div>
+        <div class="eyebrow">05 / DESIGN SYSTEM</div>
+        <h2>浅色、克制、<br />为信息让路。</h2>
+      </div>
+      <p>一套可落地的设计 token：纸张底色、墨色文本、单一主色与四类语义色。字号、间距、圆角与动效都服务于可读性与节奏。</p>
+    </div>
+
+    <div class="system-grid">
+      <div class="system-block" data-reveal>
+        <div class="system-block__head"><span class="mono">COLOR</span><span>纸张 + 墨 + 语义色</span></div>
+        <div class="swatches">
+          <div class="swatch"><i style="background:#f3f4f1"></i><b>Canvas</b><span class="mono">#F3F4F1</span></div>
+          <div class="swatch"><i style="background:#ffffff;border:1px solid var(--line)"></i><b>Surface</b><span class="mono">#FFFFFF</span></div>
+          <div class="swatch"><i style="background:#16181c"></i><b>Ink</b><span class="mono">#16181C</span></div>
+          <div class="swatch"><i style="background:#2d5be3"></i><b>Blue · 主色</b><span class="mono">#2D5BE3</span></div>
+          <div class="swatch"><i style="background:#0b8f7c"></i><b>Teal · AI</b><span class="mono">#0B8F7C</span></div>
+          <div class="swatch"><i style="background:#b06a05"></i><b>Amber · 门禁</b><span class="mono">#B06A05</span></div>
+          <div class="swatch"><i style="background:#6657d8"></i><b>Violet · ChaRM</b><span class="mono">#6657D8</span></div>
+          <div class="swatch"><i style="background:#c53f3f"></i><b>Red · 异常</b><span class="mono">#C53F3F</span></div>
+        </div>
+      </div>
+
+      <div class="system-block" data-reveal>
+        <div class="system-block__head"><span class="mono">TYPE</span><span>系统无衬线 + 等宽数字</span></div>
+        <div class="type-specimen">
+          <div class="type-row"><span class="type-row__meta mono">Display 44 / 1.1</span><span class="type-row__display">让需求自己往前跑</span></div>
+          <div class="type-row"><span class="type-row__meta mono">H1 26 / 1.2</span><span class="type-row__h1">需求与过程文档</span></div>
+          <div class="type-row"><span class="type-row__meta mono">Body 14 / 1.65</span><span class="type-row__body">需求描述、审批意见与 AI 摘要，以可读性优先的正文尺度呈现。</span></div>
+          <div class="type-row"><span class="type-row__meta mono">Mono 10</span><span class="type-row__mono">R-2041 · CRQ-2026-0842 · fp_9a3f…c41d</span></div>
+        </div>
+      </div>
+
+      <div class="system-block" data-reveal>
+        <div class="system-block__head"><span class="mono">COMPONENTS</span><span>状态、动作、进度</span></div>
+        <div class="specimen-components">
+          <div class="specimen-row"><span class="specimen-label">Buttons</span><button class="btn btn--primary btn--sm">主操作</button><button class="btn btn--sm">次要</button><button class="btn btn--sm btn--ghost">文字</button></div>
+          <div class="specimen-row"><span class="specimen-label">Status</span><span class="pill pill--green"><span class="dot"></span>已通过</span><span class="pill pill--amber"><span class="dot"></span>待确认</span><span class="pill pill--blue"><span class="dot"></span>进行中</span><span class="pill pill--red"><span class="dot"></span>失败</span></div>
+          <div class="specimen-row"><span class="specimen-label">Stages</span><div class="specimen-stepper"><span class="is-done"></span><span class="is-done"></span><span class="is-current"></span><span></span><span></span><span></span></div></div>
+          <div class="specimen-row"><span class="specimen-label">People</span><span class="avatar avatar--sm" data-tone="teal">林</span><span class="avatar avatar--sm" data-tone="ink">陈</span><span class="avatar avatar--sm" data-tone="blue">周</span><span class="avatar avatar--sm" data-tone="violet">沈</span><span class="sm">负责人多选</span></div>
+          <div class="specimen-row"><span class="specimen-label">Motion</span><span class="sm mono">140 / 220 / 360 / 560 ms · cubic-bezier(.22,.72,.24,1)</span></div>
+          <div class="specimen-row"><span class="specimen-label">Radius</span><span class="radius-specimen"><i>7</i><i>10</i><i>14</i><i>18</i></span><span class="sm">控件 → 卡片 → 面板</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DOCS ============ -->
+  <section class="section docs" id="docs">
+    <div class="section-head site-section-head" data-reveal>
+      <div>
+        <div class="eyebrow">06 / DOCUMENTATION</div>
+        <h2>设计文档，<br />与原型同步。</h2>
+      </div>
+      <p>从重构目标、信息架构到状态机、接口契约与 VSCode 插件设计，文档描述的是已经构建出来的界面。</p>
+    </div>
+    <div class="doc-grid site-docs">
+      <a class="doc-card site-doc-card" href="docs/00-重构方案.md" data-reveal>
+        <span class="site-doc-card__n mono">01</span>
+        <h3>重构方案与信息架构</h3>
+        <p>现状问题、设计目标、角色、导航与页面清单。</p>
+        <span class="site-doc-card__arrow">→</span>
+      </a>
+      <a class="doc-card site-doc-card" href="docs/01-设计系统.md" data-reveal>
+        <span class="site-doc-card__n mono">02</span>
+        <h3>设计系统</h3>
+        <p>色彩、字体、间距、组件、动效与无障碍规范。</p>
+        <span class="site-doc-card__arrow">→</span>
+      </a>
+      <a class="doc-card site-doc-card" href="docs/02-关键流程.md" data-reveal>
+        <span class="site-doc-card__n mono">03</span>
+        <h3>关键流程</h3>
+        <p>设备绑定、需求生命周期、文档门禁、CRQ 编排、ChaRM 与上线审批。</p>
+        <span class="site-doc-card__arrow">→</span>
+      </a>
+      <a class="doc-card site-doc-card" href="docs/03-界面说明.md" data-reveal>
+        <span class="site-doc-card__n mono">04</span>
+        <h3>界面逐页说明</h3>
+        <p>每个页面的目标、布局、状态、交互与数据来源。</p>
+        <span class="site-doc-card__arrow">→</span>
+      </a>
+      <a class="doc-card site-doc-card" href="docs/04-vscode-plugin.md" data-reveal>
+        <span class="site-doc-card__n mono">05</span>
+        <h3>VSCode 插件设计</h3>
+        <p>任务箱、Webview、Agents/Skills、SSO 与文档同步。</p>
+        <span class="site-doc-card__arrow">→</span>
+      </a>
+      <a class="doc-card site-doc-card" href="docs/05-数据与接口.md" data-reveal>
+        <span class="site-doc-card__n mono">06</span>
+        <h3>数据模型与接口</h3>
+        <p>实体、状态机、事件、队列与对外接口的可视化约定。</p>
+        <span class="site-doc-card__arrow">→</span>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="site-foot__inner">
+    <div class="site-foot__brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5 12 3l7 4.5v9L12 21l-7-4.5v-9Z" stroke="currentColor" stroke-width="1.6"/><path d="M8.6 10.2c1.9-1.3 4.9-1.3 6.8 0M8.6 13.8c1.9 1.3 4.9 1.3 6.8 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </span>
+      <span><b>SAP Super Agent</b><em>交付工作台 · 界面重构设计 v2.0</em></span>
+    </div>
+    <div class="site-foot__meta">
+      <span>HTML + CSS + JS · 无构建依赖</span>
+      <span>非最终产品 UI，仅用于设计评审</span>
+      <span class="mono">2026</span>
+    </div>
+    <div class="site-foot__links">
+      <a href="app.html">Web 原型</a>
+      <a href="vscode.html">VSCode 原型</a>
+      <a href="docs/00-重构方案.md">设计文档</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  if (new URLSearchParams(location.search).get("shot") === "1") {
+    document.documentElement.classList.add("shot-mode");
+  }
+  // icons
+  (function () {
+    const ICONS = {
+      route: '<path d="M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/><path d="M9 19h6a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8h3"/>',
+      feather: '<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8 2 22M17.5 15H9"/>',
+      fingerprint: '<path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/>',
+      sparkles: '<path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M19 17v3M17.5 18.5h3"/><path d="M5 3v2M4 4h2"/>',
+      user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+      code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
+      'git-branch': '<path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
+      upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
+    };
+    document.querySelectorAll('[data-icon]').forEach(function (el) {
+      var name = el.dataset.icon;
+      el.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[name] || ICONS.sparkles) + '</svg>';
+    });
+  })();
+
+  // reveal on scroll
+  const obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('is-in');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('[data-reveal]').forEach(function (el) { obs.observe(el); });
+
+  // screen filters
+  document.querySelectorAll('[data-filter]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('[data-filter]').forEach(function (b) { b.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+      const f = btn.dataset.filter;
+      document.querySelectorAll('.screen-card').forEach(function (card) {
+        const show = f === 'all' || card.dataset.group === f;
+        card.classList.toggle('is-hidden', !show);
+      });
+      document.querySelectorAll('[data-filter="all"] .mono').forEach(function (el) {
+        el.textContent = f === 'all' ? '14' : String(document.querySelectorAll('.screen-card:not(.is-hidden)').length);
+      });
+    });
+  });
+
+  // vscode screenshot switcher
+  document.querySelectorAll('[data-vs]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('[data-vs]').forEach(function (b) { b.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+      const shot = document.getElementById('vs-shot');
+      shot.src = 'screenshots/vscode-' + btn.dataset.vs + '.png';
+      document.getElementById('vs-caption').textContent = btn.dataset.caption;
+      shot.classList.remove('is-fade');
+      void shot.offsetWidth;
+      shot.classList.add('is-fade');
+    });
+  });
+</script>
+</body>
+</html>
