@@ -75,7 +75,19 @@
 
     groups: () => `
       <div class="settings-section">
-        <div class="section-head"><h2>小组与成员</h2><button class="btn btn--sm">${ic("user-plus")} 邀请成员</button></div>
+        <div class="section-head">
+          <div>
+            <h2>小组与成员</h2>
+          </div>
+          <div class="row gap-2">
+            <button class="btn btn--sm" data-action="create-group">${ic("plus")} 新建小组</button>
+            <button class="btn btn--sm btn--primary" data-action="invite-member">${ic("user-plus")} 邀请成员</button>
+          </div>
+        </div>
+        <div class="callout callout--blue" style="margin-bottom:14px">
+          ${ic("users")}
+          <span><b style="font-weight:600">一个账号只属于一个小组。</b>小组决定需求、任务、模板与通知的默认归属；跨组协作通过任务转交或文档授权完成。</span>
+        </div>
         <div class="group-cards">
           ${SA.data.groups.map(
             (g) => `
@@ -83,17 +95,22 @@
               <div class="group-card__head">
                 <span class="group-switch__icon">${g.key.split("-")[0]}</span>
                 <span class="grow"><b>${g.name}</b><em>${g.key} · ${g.members} 位成员</em></span>
-                ${g.key === SA.data.user.groupKey ? '<span class="pill pill--blue">当前</span>' : ""}
+                ${g.key === SA.data.user.groupKey ? '<span class="pill pill--blue">我的小组</span>' : ""}
               </div>
-              <div class="group-card__meta"><span>模板</span><b>PDO v4</b><span>默认审批</span><b>林桦</b></div>
-              <div class="group-card__foot"><button class="btn btn--sm btn--ghost">管理成员</button><span class="grow"></span><button class="btn btn--sm">${ic("settings")}</button></div>
+              <div class="group-card__meta"><span>默认模板</span><b>PDO v4</b><span>默认审批</span><b>林桦</b></div>
+              <div class="group-card__foot">
+                <button class="btn btn--sm btn--ghost" data-action="manage-group" data-group="${g.key}">管理小组</button>
+                <span class="grow"></span>
+                <button class="btn btn--sm" data-action="manage-group" data-group="${g.key}" aria-label="小组设置">${ic("settings")}</button>
+              </div>
             </div>`
           ).join("")}
         </div>
+
         <div class="card" style="margin-top:14px">
-          <div class="card-head"><h3>财务共享组成员</h3><span class="sm">12 人 · 3 位管理员</span></div>
+          <div class="card-head"><h3>财务共享组成员</h3><span class="sm">12 人 · 3 位管理员 · 1 位待接受邀请</span></div>
           <div class="table-wrap"><table class="table">
-            <thead><tr><th>成员</th><th>邮箱</th><th>角色</th><th>设备绑定</th><th>最近活跃</th><th></th></tr></thead>
+            <thead><tr><th>成员</th><th>邮箱</th><th>角色</th><th>所属小组</th><th>设备绑定</th><th>最近活跃</th><th></th></tr></thead>
             <tbody>
               ${[
                 ["陈曦", "chen.xi@sap.example", "SAP 业务", "已绑定 · MacBook Pro", "刚刚", "ink"],
@@ -109,15 +126,39 @@
                   <td><span class="member-cell"><span class="avatar avatar--sm" data-tone="${tone}">${name[0]}</span>${name}</span></td>
                   <td><span class="mono sm">${email}</span></td>
                   <td><span class="pill pill--outline">${role}</span></td>
+                  <td><span class="pill pill--slate" style="font-size:8.5px">财务共享组</span></td>
                   <td><span class="sm ${device === "未绑定" ? "muted" : ""}">${device}</span></td>
                   <td><span class="sm muted">${active}</span></td>
-                  <td><button class="icon-btn icon-btn--sm">${ic("more-horizontal")}</button></td>
+                  <td><button class="icon-btn icon-btn--sm" data-action="member-more">${ic("more-horizontal")}</button></td>
                 </tr>`
                 )
                 .join("")}
             </tbody>
           </table></div>
-          <div class="table-foot"><span class="sm">未绑定成员下次访问需要通过一次性链接完成设备绑定。</span></div>
+          <div class="table-foot"><span class="sm">成员只能属于一个小组；调整小组通过管理员操作完成。未绑定成员下次访问需通过一次性链接完成设备绑定。</span></div>
+        </div>
+
+        <div class="settings-two" style="margin-top:14px">
+          <div class="card">
+            <div class="card-head"><h3>分组规则</h3><span class="pill pill--outline">管理员</span></div>
+            <div class="settings-kv">
+              <div><span>账号归属</span><b>每人仅 1 个小组</b></div>
+              <div><span>默认审批人</span><b>林桦 · 需求顾问</b></div>
+              <div><span>默认阶段模板</span><b>PDO 六阶段 · v4</b></div>
+              <div><span>需求可见性</span><b>仅本组可见</b></div>
+              <div><span>跨组协作</span><b>任务转交 / 文档授权</b></div>
+              <div><span>通知归属</span><b>按小组默认频道 #fin-sap-it</b></div>
+            </div>
+            <div class="integration-card__foot"><button class="btn btn--sm" data-action="edit-group-rules">${ic("edit")} 修改分组规则</button></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>成员变更</h3><span class="sm">最近 7 天</span></div>
+            <div class="change-list">
+              <div class="change-row"><span class="change-row__icon" style="color:var(--green)">${ic("user-plus")}</span><span class="change-row__main"><b>顾遥 加入财务共享组</b><em>邀请已接受 · 11-09 14:20</em></span></div>
+              <div class="change-row"><span class="change-row__icon" style="color:var(--ink-4)">${ic("user")}</span><span class="change-row__main"><b>王栎 角色调整为 Basis / ChaRM</b><em>管理员 林桦 · 11-08 10:02</em></span></div>
+              <div class="change-row"><span class="change-row__icon" style="color:var(--ink-4)">${ic("users")}</span><span class="change-row__main"><b>小组默认模板切换到 PDO v4</b><em>仅影响新建需求 · 11-06 17:30</em></span></div>
+            </div>
+          </div>
         </div>
       </div>`,
 
@@ -246,6 +287,85 @@
       });
       root.querySelectorAll(".switch").forEach((s) => {
         s.addEventListener("click", () => s.classList.toggle("is-on"));
+      });
+      root.addEventListener("click", (e) => {
+        const el = e.target.closest("[data-action]");
+        if (!el) return;
+        const action = el.dataset.action;
+        if (action === "manage-group") {
+          const key = el.dataset.group || "FIN-SH";
+          const g = SA.data.groups.find((x) => x.key === key) || SA.data.groups[0];
+          SA.modal({
+            title: "管理小组 · " + g.name,
+            desc: "小组成员与默认配置。一个账号只属于一个小组。",
+            wide: true,
+            body:
+              '<div class="form-row form-row--2">' +
+              '<div class="field"><span class="field__label">小组名称</span><input class="input" value="' + g.name + '" /></div>' +
+              '<div class="field"><span class="field__label">小组 Key</span><input class="input mono" value="' + g.key + '" readonly /></div>' +
+              "</div>" +
+              '<div class="form-row form-row--2" style="margin-top:12px">' +
+              '<div class="field"><span class="field__label">默认阶段模板</span><select class="select"><option>PDO 六阶段 · v4</option><option>默认三阶段 · v2</option></select></div>' +
+              '<div class="field"><span class="field__label">默认审批人</span><select class="select"><option>林桦 · 需求顾问</option><option>陈曦 · 业务方</option></select></div>' +
+              "</div>" +
+              '<div class="field" style="margin-top:12px"><span class="field__label">成员</span><div class="owner-picker"><div class="owner-picker__selected">' +
+              ["陈曦", "林桦", "周予", "沈珂", "王栎", "顾遥"].map((n) => '<span class="owner-chip"><span class="avatar avatar--sm" data-tone="slate">' + n[0] + "</span>" + n + '<span class="owner-chip__role">成员</span></span>').join("") +
+              '<button class="owner-picker__add">' + ic("plus") + " 添加成员</button></div></div></div>" +
+              '<div class="callout callout--blue" style="margin-top:12px">' + ic("info") + "<span>成员从一个小组转移到另一个小组时，其历史需求与任务仍归属原小组，新的需求按新小组归属。</span></div>",
+            actions: [
+              { label: "取消", variant: "ghost" },
+              { label: "保存", variant: "primary", onClick: () => SA.toast("小组配置已保存") },
+            ],
+          });
+        } else if (action === "create-group") {
+          SA.modal({
+            title: "新建小组",
+            desc: "小组用于隔离需求、模板与通知默认值。",
+            body:
+              '<div class="field"><span class="field__label">小组名称</span><input class="input" placeholder="例如：财务共享组" /></div>' +
+              '<div class="form-row form-row--2" style="margin-top:12px">' +
+              '<div class="field"><span class="field__label">小组 Key</span><input class="input mono" placeholder="FIN-SH" /></div>' +
+              '<div class="field"><span class="field__label">默认模板</span><select class="select"><option>PDO 六阶段 · v4</option><option>默认三阶段 · v2</option></select></div>' +
+              "</div>" +
+              '<div class="callout callout--blue" style="margin-top:12px">' + ic("info") + "<span>成员加入小组后不可同时属于其他小组；跨组协作通过任务转交完成。</span></div>",
+            actions: [
+              { label: "取消", variant: "ghost" },
+              { label: "创建小组", variant: "primary", onClick: () => SA.toast("小组已创建") },
+            ],
+          });
+        } else if (action === "invite-member") {
+          SA.modal({
+            title: "邀请成员",
+            desc: "邀请会绑定邮箱与小组，成员点击一次性链接后加入。",
+            body:
+              '<div class="field"><span class="field__label">姓名</span><input class="input" placeholder="例如：顾遥" /></div>' +
+              '<div class="field" style="margin-top:12px"><span class="field__label">企业邮箱</span><input class="input" type="email" placeholder="you@sap.example" /></div>' +
+              '<div class="form-row form-row--2" style="margin-top:12px">' +
+              '<div class="field"><span class="field__label">小组</span><select class="select"><option>财务共享组 · FIN-SH</option><option>供应链组 · SCM-CN</option><option>制造组 · MFG-CN</option></select></div>' +
+              '<div class="field"><span class="field__label">角色</span><select class="select"><option>SAP 业务</option><option>需求顾问</option><option>SAP IT · 开发</option><option>Basis / ChaRM</option></select></div>' +
+              "</div>" +
+              '<div class="callout callout--blue" style="margin-top:12px">' + ic("mail") + "<span>邀请邮件包含一次性绑定链接，10 分钟内有效。</span></div>",
+            actions: [
+              { label: "取消", variant: "ghost" },
+              { label: "发送邀请", variant: "primary", onClick: () => SA.toast("邀请已发送") },
+            ],
+          });
+        } else if (action === "edit-group-rules") {
+          SA.toast("演示：打开分组规则编辑");
+        } else if (action === "member-more") {
+          SA.modal({
+            title: "成员操作",
+            desc: "成员只能属于一个小组，调整归属会记录审计事件。",
+            body:
+              '<div class="kv">' +
+              '<div class="kv-row"><span class="kv-key">角色</span><span class="kv-val">调整角色 / 权限</span></div>' +
+              '<div class="kv-row"><span class="kv-key">设备</span><span class="kv-val">解除设备绑定 / 要求重新注册</span></div>' +
+              '<div class="kv-row"><span class="kv-key">小组</span><span class="kv-val">转移至其他小组（审计）</span></div>' +
+              '<div class="kv-row"><span class="kv-key">危险</span><span class="kv-val" style="color:var(--red)">移除成员</span></div>' +
+              "</div>",
+            actions: [{ label: "关闭", variant: "ghost" }],
+          });
+        }
       });
     },
   });

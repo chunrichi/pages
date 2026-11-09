@@ -192,12 +192,13 @@
     </div>
 
     <div class="screen-filters" data-reveal>
-      <button class="chip is-active" data-filter="all">全部 <span class="mono">14</span></button>
+      <button class="chip is-active" data-filter="all">全部 <span class="mono">15</span></button>
       <button class="chip" data-filter="onboard">注册与绑定</button>
       <button class="chip" data-filter="demand">需求与澄清</button>
       <button class="chip" data-filter="doc">文档与上线</button>
       <button class="chip" data-filter="delivery">交付工具</button>
       <button class="chip" data-filter="ops">自动化</button>
+      <button class="chip" data-filter="admin">设置与小组</button>
       <span class="grow"></span>
       <span class="sm mono" style="color:var(--ink-4)">WEB · 1440 × 900</span>
     </div>
@@ -236,7 +237,7 @@
       <a class="screen-card" data-group="doc" href="app.html#/demands/R-2041/doc/functional-design">
         <div class="screen-card__shot"><img src="screenshots/doc-review.png" alt="文档评审" loading="lazy" /><span class="screen-card__badge">REVIEW</span></div>
         <div class="screen-card__meta"><span class="screen-card__n">07</span><h3>文档评审</h3><span class="screen-card__arrow">↗</span></div>
-        <p>参考 Plannotator 的轻量批注：行内标记、版本对比、门禁检查与 AI 建议。</p>
+        <p>Markdown 预览 / 源码、行内批注、版本对比，批注可交给 AI 二次生成新版本。</p>
       </a>
       <a class="screen-card" data-group="doc" href="app.html#/demands/R-2045/release">
         <div class="screen-card__shot"><img src="screenshots/release.png" alt="上线与审批" loading="lazy" /><span class="screen-card__badge">RELEASE</span></div>
@@ -269,9 +270,14 @@
         <p>执行计划、工具调用、tokens 与成本；失败可从检查点重试。</p>
       </a>
       <a class="screen-card" data-group="ops" href="app.html#/settings">
-        <div class="screen-card__shot"><img src="screenshots/settings.png" alt="集成与设置" loading="lazy" /><span class="screen-card__badge">SETTINGS</span></div>
+        <div class="screen-card__shot"><img src="screenshots/settings.png" alt="集成与安全" loading="lazy" /><span class="screen-card__badge">SETTINGS</span></div>
         <div class="screen-card__meta"><span class="screen-card__n">14</span><h3>集成与安全</h3><span class="screen-card__arrow">↗</span></div>
         <p>Teams、SMTP、JIRA、SolMan、ChaRM 与 AI 网关的连接状态；设备与通知策略。</p>
+      </a>
+      <a class="screen-card" data-group="admin" href="app.html#/settings?tab=groups">
+        <div class="screen-card__shot"><img src="screenshots/settings-groups.png" alt="小组与成员" loading="lazy" /><span class="screen-card__badge">GROUPS</span></div>
+        <div class="screen-card__meta"><span class="screen-card__n">15</span><h3>小组与成员</h3><span class="screen-card__arrow">↗</span></div>
+        <p>一个账号只属于一个小组；小组决定默认模板、审批人与通知频道，跨组通过转交协作。</p>
       </a>
     </div>
   </section>
@@ -481,7 +487,7 @@
         card.classList.toggle('is-hidden', !show);
       });
       document.querySelectorAll('[data-filter="all"] .mono').forEach(function (el) {
-        el.textContent = f === 'all' ? '14' : String(document.querySelectorAll('.screen-card:not(.is-hidden)').length);
+        el.textContent = f === 'all' ? '15' : String(document.querySelectorAll('.screen-card:not(.is-hidden)').length);
       });
     });
   });

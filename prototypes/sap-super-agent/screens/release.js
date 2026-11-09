@@ -25,7 +25,7 @@
             <p class="page-head__desc">${demand.id} · ${SA.h(demand.title)} · 计划 11-12 21:00 上线</p>
           </div>
           <div class="release-head__actions">
-            <button class="btn">${ic("download")} 导出 PDF</button>
+            <button class="btn">${ic("download")} 导出 .md</button>
             <button class="btn">${ic("edit")} 编辑</button>
             <button class="btn btn--primary" data-action="submit-crq">${ic("send")} 提交 CRQ 审批</button>
           </div>

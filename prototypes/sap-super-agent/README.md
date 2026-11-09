@@ -2,6 +2,7 @@
 
 > 为现有 SAP 交付产品做的一次完整界面重构：**HTML + 动画的高保真原型 + 设计文档 + VSCode 扩展设计**。  
 > 风格统一、浅色、克制；把「业务提需求 → AI 澄清与文档 → IT 开发 → CRQ / ChaRM → 上线审批」放进同一条可追溯的界面链路。
+> 账号只属于一个小群组；文档格式当前只支持 Markdown，批注可交给 AI 二次生成新版本。
 
 ## 打开方式
 
@@ -11,7 +12,7 @@
 | --- | --- | --- |
 | **设计总览** | [`index.html`](index.html) | 重构叙事、设计原则、全部界面索引、设计系统、文档入口 |
 | **Web 工作台** | [`app.html`](app.html) | 可交互 SPA：注册绑定、需求、AI 澄清、文档评审、CRQ、ChaRM、队列、Agent、设置 |
-| **VSCode 插件** | [`vscode.html`](vscode.html) | 8 个插件视图：任务箱、需求详情、文档同步、Agents/Skills、ChaRM/SSO、Copilot 协作、冲突、状态 |
+| **VSCode 插件** | [`vscode.html`](vscode.html) | 8 个插件视图，独立 HTML；产品界面中不提供入口 |
 
 推荐先打开 `index.html`，从总览进入各原型；也可以直接打开 `app.html#/home`。
 

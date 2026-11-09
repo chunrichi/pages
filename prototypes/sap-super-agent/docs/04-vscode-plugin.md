@@ -1,7 +1,9 @@
 # 04 · VSCode 插件设计
 
 > 定位：**任务客户端 + 本地能力宿主**，不是聊天机器人，也不接管 Copilot Chat。  
-> 原型：[`vscode.html`](../vscode.html)（8 个视图，hash 切换）· 截图 [`screenshots/vscode-*.png`](../screenshots/)
+> 原型：[`vscode.html`](../vscode.html)（独立 HTML，8 个视图，hash 切换）· 截图 [`screenshots/vscode-*.png`](../screenshots/)
+>
+> 说明：该原型不嵌入 Web 工作台，也不在 Web 界面提供示例入口；仅作为插件设计交付物单独打开。
 
 ## 1. 为什么需要插件
 

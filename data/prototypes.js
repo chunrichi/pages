@@ -23,8 +23,8 @@ window.SHOWCASE = {
   site: {
     name: "AI Space",
     tagline: "原型展厅",
-    // 建好 GitHub 仓库后填入完整地址，例如 https://github.com/you/pages
-    github: ""
+    // GitHub 仓库地址；填了之后页头图标和文档链接会指向仓库
+    github: "https://github.com/chunrichi/pages"
   },
 
   prototypes: [
