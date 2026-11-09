@@ -18,7 +18,7 @@
 - 展厅入口：根目录 `index.html`
 - 原型目录：`prototypes/<slug>/`，每个原型都是可以单独打开的静态站点
 - 数据登记：`data/prototypes.js`（唯一数据源）
-- 部署：`.github/workflows/deploy.yml`（push `main` 自动发布）
+- 部署：GitHub Pages 分支发布（`main` 根目录，push 自动构建，不使用 Actions）
 
 ## 开工前先读
 
@@ -51,7 +51,6 @@
 │   ├── serve.mjs               # 零依赖本地服务器（npm run dev）
 │   ├── validate.mjs            # 校验（npm run validate）
 │   └── new-prototype.mjs       # 脚手架（npm run new）
-├── .github/workflows/deploy.yml
 ├── .nojekyll
 ├── README.md
 └── AGENTS.md
@@ -65,12 +64,13 @@
 4. **每个原型必须登记。** `prototypes/` 下除 `_template/` 外的每个目录都应在 `data/prototypes.js` 中有一条记录；改完跑 `npm run validate`。
 5. **registry 是唯一数据源。** 卡片、首屏、筛选、舞台都从它渲染；不要在 `index.html` 里硬编码某个原型的标题或截图。
 6. **颜色只作为元数据。** 原型卡片强调色来自 registry 的 `accent`；展厅本身保持中性、明亮，不为单个原型改主题。
-7. **不要回归已有能力。** 包括：舞台打开/关闭、入口 tab、桌面/平板/手机预览、深链接、Esc、focus 管理、筛选、滚动 reveal、`prefers-reduced-motion`、无横向滚动。
-8. **不要把原型改成外链或截图代替。** 原型展示的是可运行的 iframe 实时页面；封面只是入口。
-9. **不引入外部字体或跟踪脚本。** 展厅没有 CDN 请求，保持可离线打开。
-10. **提交前验证。** `npm run validate` 必须通过；涉及 UI 的改动要在 1440 和 390 宽度各看一遍。
-11. **原型更新后改 `updated`。** 日期用 `YYYY-MM-DD`；状态从 `进行中 / 可交互 / 设计稿` 中选一个最贴近的。
-12. **大文件克制。** GitHub Pages 单文件上限 100 MB，整站建议 < 1 GB；截图优先 PNG/WebP，不要把原始素材、视频源文件塞进来。
+7. **不要新增 Actions 部署工作流。** 本站是纯静态、无构建，Pages 直接走 `main` 分支发布；Actions 只会多一层故障面。只有将来引入构建步骤（并且用户明确同意）时，才切回 Actions。
+8. **不要回归已有能力。** 包括：舞台打开/关闭、入口 tab、桌面/平板/手机预览、深链接、Esc、focus 管理、筛选、滚动 reveal、`prefers-reduced-motion`、无横向滚动。
+9. **不要把原型改成外链或截图代替。** 原型展示的是可运行的 iframe 实时页面；封面只是入口。
+10. **不引入外部字体或跟踪脚本。** 展厅没有 CDN 请求，保持可离线打开。
+11. **提交前验证。** `npm run validate` 必须通过；涉及 UI 的改动要在 1440 和 390 宽度各看一遍。
+12. **原型更新后改 `updated`。** 日期用 `YYYY-MM-DD`；状态从 `进行中 / 可交互 / 设计稿` 中选一个最贴近的。
+13. **大文件克制。** GitHub Pages 单文件上限 100 MB，整站建议 < 1 GB；截图优先 PNG/WebP，不要把原始素材、视频源文件塞进来。
 
 ## 工作流
 
@@ -97,7 +97,7 @@ git diff --stat        # 确认只动了目标原型 / registry
 npm run validate
 git add -A
 git commit -m "feat(proto): add my-prototype"
-git push origin main   # Actions 发布到 GitHub Pages
+git push origin main   # Pages 分支发布自动重建
 ```
 
 ## 完成标准

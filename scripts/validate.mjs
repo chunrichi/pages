@@ -280,10 +280,7 @@ if (absoluteWarnings > 8) {
 
 /* ---------- publishing files ------------------------------- */
 if (!existsSync(path.join(root, ".nojekyll"))) {
-  warn("缺少 .nojekyll（如果改成从分支根目录发布，一定要有它）");
-}
-if (!existsSync(path.join(root, ".github/workflows/deploy.yml"))) {
-  warn("缺少 .github/workflows/deploy.yml，GitHub Actions 不会自动部署");
+  warn("缺少 .nojekyll（分支发布时 Jekyll 会接管站点，可能导致路径 404）");
 }
 
 /* ---------- report ---------------------------------------- */

@@ -64,7 +64,6 @@ python3 -m http.server 4173
 │   ├── validate.mjs            # 发布前校验
 │   └── new-prototype.mjs       # 复制模板 + 自动登记
 ├── docs/                       # README 预览图
-├── .github/workflows/deploy.yml
 ├── .nojekyll
 ├── AGENTS.md
 └── README.md
@@ -141,7 +140,7 @@ Agent 可以按 [`skills/update-prototype/SKILL.md`](skills/update-prototype/SKI
 
 ## 部署到项目级 GitHub Pages
 
-前置：有一个 GitHub 仓库；公开仓库最省事。发布会通过仓库自带的 Actions 工作流完成。
+前置：一个公开仓库（免费计划下 Pages 需要公开仓库）。这个展厅没有构建步骤，使用 **分支发布**：静态文件直接从 `main` 根目录发出，push 即上线，不依赖 GitHub Actions。
 
 ```bash
 git init -b main            # 如果还没初始化
@@ -154,17 +153,18 @@ git push -u origin main
 然后在 GitHub 上：
 
 1. 打开仓库 **Settings → Pages**
-2. **Build and deployment → Source** 选 **GitHub Actions**
-3. 推送到 `main` 会触发 `.github/workflows/deploy.yml`；也可以手动 **Run workflow**
-4. 发布地址：`https://<owner>.github.io/<repo>/`
+2. **Build and deployment → Source** 选 **Deploy from a branch**
+3. Branch 选 `main`，Folder 选 `/(root)`，保存
+4. 之后每次 push 到 `main`，Pages 自动重新构建；地址：`https://<owner>.github.io/<repo>/`
 
 例如仓库叫 `pages`，地址就是 `https://<owner>.github.io/pages/`。
 
 要点：
 
+- 根目录的 `.nojekyll` 会让 Pages 跳过 Jekyll 处理，静态文件按原样发布。
 - 所有链接都是相对路径，`/<repo>/` 子路径下可直接工作；改仓库名不用改代码。
-- 工作流会先跑 `node scripts/validate.mjs`，registry 有问题就不会发布。
-- 如果更想用「Deploy from a branch」：Settings → Pages → Source 选 **Deploy from a branch** → `main` / `/(root)`。根目录已有 `.nojekyll`；但这种方式没有发布前校验，不推荐。
+- 发布前校验需要自己跑 `npm run validate`（或让 Agent 按 `skills/publish-gallery/SKILL.md` 执行）；它不在 Pages 构建里，但这是唯一需要人工保证的一步。
+- 为什么不用 Actions：纯静态站点没有构建产物要生成，分支发布少一层依赖；GitHub Actions 故障时 push 仍然能更新站点。将来如果引入构建步骤，再切回 Actions（同时恢复预发布校验）。
 - 自定义域名：在根目录放 `CNAME` 文件，或在 Pages 设置里填写域名。
 - GitHub Pages 有软限制：仓库/站点建议 < 1 GB，单文件 < 100 MB；不要把视频原片和设计源文件放进来。
 
@@ -190,7 +190,7 @@ npm run validate
 - 封面是否为合理比例（PNG 会检查 16:10 和最小宽度）
 - `prototypes/` 下是否有目录漏登记
 - 是否出现 `/assets/...` 这类在项目级 Pages 下会失效的根路径引用
-- `.nojekyll` 和部署工作流是否存在
+- 根目录 `.nojekyll` 是否存在（分支发布必需）
 
 ## 给 Agent 的入口
 
