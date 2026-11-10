@@ -121,6 +121,31 @@
   opacity: 1;
   transform: none;
 }
+/* 部分组件自带的 transition 简写会覆盖上面 [data-reveal] 的显现过渡（丢掉 opacity / transform / 延迟）：
+   这里只对受影响的组补回，让 --d 交错真正生效；显现结束后 JS 加 .is-revealed 恢复组件原有的 hover 过渡。 */
+.principle[data-reveal] {
+  transition:
+    opacity 0.7s var(--ease-out) var(--d, 0ms),
+    transform 0.7s var(--ease-out) var(--d, 0ms),
+    background var(--dur-2) ease;
+}
+.site-doc-card[data-reveal] {
+  transition:
+    opacity 0.7s var(--ease-out) var(--d, 0ms),
+    transform 0.7s var(--ease-out) var(--d, 0ms),
+    border-color var(--dur-2) ease,
+    box-shadow var(--dur-2) ease;
+}
+.principle.is-revealed {
+  transition: background var(--dur-2) ease;
+}
+.site-doc-card.is-revealed {
+  transition:
+    border-color var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease),
+    transform var(--dur-2) var(--ease),
+    background-color var(--dur-2) var(--ease);
+}
 
 /* --- hero -------------------------------------------------- */
 .hero {
@@ -158,14 +183,15 @@
   align-items: center;
 }
 .hero__copy > * {
-  animation: sa-rise 0.8s var(--ease-out) both;
+  animation: sa-rise var(--dur-5) var(--ease-out) both;
   animation-delay: var(--hd, 0ms);
 }
-.hero__copy > :nth-child(1) { --hd: 40ms; }
-.hero__copy > :nth-child(2) { --hd: 110ms; }
-.hero__copy > :nth-child(3) { --hd: 190ms; }
-.hero__copy > :nth-child(4) { --hd: 270ms; }
-.hero__copy > :nth-child(5) { --hd: 340ms; }
+/* 首屏文案入场交错：0 / 70 / 140 / 210ms（最多 4 档，第 5 个起沿用最后一档） */
+.hero__copy > :nth-child(1) { --hd: 0ms; }
+.hero__copy > :nth-child(2) { --hd: 70ms; }
+.hero__copy > :nth-child(3) { --hd: 140ms; }
+.hero__copy > :nth-child(4) { --hd: 210ms; }
+.hero__copy > :nth-child(n + 5) { --hd: 210ms; }
 .hero__kicker {
   display: inline-flex;
   align-items: center;
@@ -721,7 +747,7 @@
   font-family: var(--mono);
   font-size: 12px;
   color: var(--ink-4);
-  transition: all var(--dur-2) var(--ease);
+  transition: color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
 }
 .screen-card:hover .screen-card__arrow {
   color: var(--blue);
@@ -781,7 +807,8 @@
   background: var(--surface);
   color: var(--ink-3);
   font-size: 9.5px;
-  transition: all var(--dur-1) ease;
+  transition: color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease),
+    border-color var(--dur-1) var(--ease);
 }
 .vscode-tabs button:hover {
   color: var(--ink);
@@ -999,7 +1026,11 @@
   padding: 20px 20px 18px;
   border-radius: var(--r-md);
   background: var(--surface);
-  transition: all var(--dur-2) var(--ease);
+  transition:
+    border-color var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease),
+    transform var(--dur-2) var(--ease),
+    background-color var(--dur-2) var(--ease);
 }
 .site-doc-card:hover {
   border-color: var(--line-2);
@@ -1031,7 +1062,7 @@
   font-family: var(--mono);
   font-size: 12px;
   color: var(--ink-4);
-  transition: all var(--dur-2) var(--ease);
+  transition: color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
 }
 .site-doc-card:hover .site-doc-card__arrow {
   color: var(--blue);
@@ -1202,10 +1233,20 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  /* 不播入场、不做滚动显现：内容始终完整可见 */
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
   .browser,
   .float,
+  .float__bar i,
   .hero__ticker-track,
-  .flowline__rail i {
+  .flowline__rail i,
+  .hero__visual,
+  .hero__copy > *,
+  .vscode-frame img.is-fade {
     animation: none !important;
   }
 }
@@ -1217,9 +1258,12 @@ html.shot-mode [data-reveal] {
 }
 html.shot-mode .browser,
 html.shot-mode .float,
+html.shot-mode .float__bar i,
 html.shot-mode .hero__ticker-track,
 html.shot-mode .flowline__rail i,
-html.shot-mode .hero__copy > * {
+html.shot-mode .hero__visual,
+html.shot-mode .hero__copy > *,
+html.shot-mode .vscode-frame img.is-fade {
   animation: none !important;
 }
 html.shot-mode .hero__copy > * {

@@ -109,12 +109,15 @@
   /* --- motion ----------------------------------------------- */
   --ease: cubic-bezier(0.22, 0.72, 0.24, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
   --dur-1: 140ms;
   --dur-2: 220ms;
   --dur-3: 360ms;
   --dur-4: 560ms;
   --dur-5: 900ms;
+  --dur-exit: 120ms; /* 路由离场，CSS 与 JS 共用 */
+  --stagger: 38ms; /* 页面直接子元素交错步长，上限 8 个 */
 
   /* --- z ---------------------------------------------------- */
   --z-sticky: 20;
@@ -132,5 +135,15 @@
     --dur-3: 0ms;
     --dur-4: 0ms;
     --dur-5: 0ms;
+    --dur-exit: 0ms;
+    --stagger: 0ms;
   }
+}
+
+/* 可动画的侧栏宽度：折叠 / 展开过渡依赖 @property 注册；
+   不支持 @property 的浏览器直接切换宽度，行为保持不变。 */
+@property --sidebar-w {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 232px;
 }

@@ -149,7 +149,7 @@
             </div>
           </div>
           <div class="detail-head__actions">
-            <button class="btn" data-action="open-vscode">${ic("monitor")} 在 VSCode 打开</button>
+            ${SA.view === "business" ? "" : '<button class="btn" data-action="open-vscode">' + ic("monitor") + " 在 VSCode 打开</button>"}
             <a class="btn btn--primary" href="#/demands/${demand.id}/doc/functional-design">${ic("git-commit")} 确认功能设计 v2</a>
             <button class="icon-btn detail-more" data-action="detail-more">${ic("more-horizontal")}</button>
           </div>

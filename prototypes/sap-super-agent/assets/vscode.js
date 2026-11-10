@@ -4,6 +4,8 @@
 (function () {
   "use strict";
   const ic = window.ic;
+  const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const prefersReducedMotion = () => reducedMotionQuery.matches;
 
   const ICON = {
     sparkles: "sparkles",
@@ -738,6 +740,30 @@
       '<span class="vs-status__item">Ln 12, Col 8</span>';
   }
 
+  // 进度条：把 data-bar 的终值写进 width，宽度过渡在 components.css。
+  function fillBars() {
+    document.querySelectorAll("[data-bar]").forEach((el) => {
+      el.style.width = el.dataset.bar + "%";
+    });
+  }
+
+  function paintBars() {
+    if (!document.querySelector("[data-bar]")) return;
+    if (prefersReducedMotion()) {
+      fillBars();
+      return;
+    }
+    // 两个 rAF：先让 0 宽度作为初始样式落定，下一帧再写终值才能触发过渡
+    requestAnimationFrame(() => requestAnimationFrame(fillBars));
+  }
+
+  // 重播一次 .anim-fade（先移除并强制回流，再加回类名）
+  function replayFade(el) {
+    el.classList.remove("anim-fade");
+    void el.offsetWidth;
+    el.classList.add("anim-fade");
+  }
+
   function render(view) {
     const v = VIEWS[view] || VIEWS.plan;
     document.getElementById("vs-sidebar").innerHTML = v.sidebar();
@@ -754,10 +780,8 @@
     document.querySelectorAll("[data-view]").forEach((b) => {
       b.classList.toggle("is-active", b.dataset.view === view);
     });
-    // scale progress bars immediately
-    document.querySelectorAll("[data-bar]").forEach((el) => {
-      setTimeout(() => (el.style.width = el.dataset.bar + "%"), 60);
-    });
+    // 进度条：rAF 后从 0 过渡到终值；reduced-motion 直接写终值
+    paintBars();
     // scroll top
     document.getElementById("vs-editor").scrollTop = 0;
   }
@@ -791,7 +815,11 @@
       const tabEl = e.target.closest("[data-vsw-tab]");
       if (tabEl) {
         document.querySelectorAll("[data-vsw-tab]").forEach((t) => t.classList.toggle("is-active", t === tabEl));
-        document.querySelectorAll("[data-vsw-panel]").forEach((p) => (p.hidden = p.dataset.vswPanel !== tabEl.dataset.vswTab));
+        document.querySelectorAll("[data-vsw-panel]").forEach((p) => {
+          p.hidden = p.dataset.vswPanel !== tabEl.dataset.vswTab;
+        });
+        const panel = document.querySelector('[data-vsw-panel="' + tabEl.dataset.vswTab + '"]');
+        if (panel && !prefersReducedMotion()) replayFade(panel);
         return;
       }
     });

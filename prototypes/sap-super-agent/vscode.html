@@ -70,17 +70,23 @@
 
 <script src="assets/icons.js"></script>
 <script>
+  // 本页不加载 assets/app.js，只保留极简 toast shim；时序常量集中在此，与 app.js 的 SA.toast 保持一致
   window.SA = window.SA || {};
   SA.screens = SA.screens || {};
   SA.data = SA.data || {};
   SA.register = SA.register || function (n, s) { SA.screens[n] = s; };
+  var TOAST_HOLD_MS = 2400;   // 展示时长
+  var TOAST_LEAVE_MS = 260;   // 离场：sa-fade --dur-2 (220ms) + 40ms 缓冲
   SA.toast = function (msg, opts) {
     var stack = document.getElementById("toast-stack");
     var el = document.createElement("div");
     el.className = "toast";
     el.innerHTML = window.ic((opts && opts.icon) || "check-circle") + "<span>" + msg + "</span>";
     stack.appendChild(el);
-    setTimeout(function () { el.classList.add("is-leaving"); setTimeout(function () { el.remove(); }, 260); }, 2400);
+    setTimeout(function () {
+      el.classList.add("is-leaving");
+      setTimeout(function () { el.remove(); }, TOAST_LEAVE_MS);
+    }, TOAST_HOLD_MS);
   };
 </script>
 <script src="assets/vscode.js"></script>

@@ -19,6 +19,7 @@
   SA.register("charm", {
     title: "ChaRM 变更",
     render() {
+      const readOnly = SA.isReadOnly();
       return `
       <div class="page page-charm">
         <div class="page-head">
@@ -27,11 +28,17 @@
             <div class="page-head__title"><h1>ChaRM 变更中心</h1><span class="pill pill--violet pill--lg">SOLMAN</span></div>
             <p class="page-head__desc">申请 Change Request、等待 Basis 审批、创建 Change Document。字段与审批人从 ChaRM 接口实时拉取。</p>
           </div>
-          <div class="page-head__actions">
+          ${
+            readOnly
+              ? ""
+              : `<div class="page-head__actions">
             <button class="btn" data-action="sync-charm">${ic("refresh")} 同步 SolMan</button>
             <button class="btn btn--primary" data-action="new-cr">${ic("plus")} 新建 Change Request</button>
-          </div>
+          </div>`
+          }
         </div>
+
+        ${readOnly ? SA.readOnlyBar("变更创建与 Basis 审批由 SAP IT 完成，业务方可以查看进度。") : ""}
 
         <div class="charm-status">
           <div class="charm-status__left">
@@ -44,10 +51,14 @@
           <div class="charm-status__right">
             <span class="charm-status__metric"><b>2</b> 待 Basis 审批</span>
             <span class="charm-status__metric"><b>6</b> 活跃 Change Document</span>
-            <div class="charm-status__switch">
+            ${
+              readOnly
+                ? ""
+                : `<div class="charm-status__switch">
               <span>自动同步</span>
               <button class="switch is-on" data-action="toggle-sync"></button>
-            </div>
+            </div>`
+            }
           </div>
         </div>
 
@@ -71,9 +82,13 @@
                 </div>`
               ).join("")}
             </div>
-            <div class="charm-list__foot">
+            ${
+              readOnly
+                ? ""
+                : `<div class="charm-list__foot">
               <a class="link sm" href="#/ops/queue">${ic("activity")} 同步队列 ${ic("arrow-right")}</a>
-            </div>
+            </div>`
+            }
           </aside>
 
           <section class="charm-detail">
@@ -92,10 +107,14 @@
                   <span>${ic("clock")} 今天 16:22 创建</span>
                 </div>
               </div>
-              <div class="charm-head__actions">
+              ${
+                readOnly
+                  ? ""
+                  : `<div class="charm-head__actions">
                 <button class="btn btn--sm" data-action="poll-charm">${ic("rotate-cw")} 拉取状态</button>
                 <button class="btn btn--sm btn--primary" data-action="new-cr">${ic("plus")} 新建 CR</button>
-              </div>
+              </div>`
+              }
             </div>
 
             <div class="card charm-flow">
@@ -148,7 +167,7 @@
                     <span class="is-current">${ic("clock")} 16:40 进入 Basis 审批</span>
                     <span>${ic("git-branch")} 审批通过后自动创建 CD</span>
                   </div>
-                  <button class="btn btn--sm btn--block" data-action="mock-approve">${ic("shield")} 模拟 Basis 审批通过</button>
+                  ${readOnly ? "" : '<button class="btn btn--sm btn--block" data-action="mock-approve">' + ic("shield") + " 模拟 Basis 审批通过</button>"}
                 </div>
               </div>
             </div>
@@ -189,28 +208,44 @@
           item.classList.add("is-active");
         });
       });
-      root.querySelector("[data-action='sync-charm']").addEventListener("click", (e) => {
-        e.currentTarget.classList.add("is-loading");
-        setTimeout(() => {
-          e.currentTarget.classList.remove("is-loading");
-          document.getElementById("charm-sync-sub").textContent = "最后一次同步 刚刚 · 自动同步每 60s";
-          SA.toast("已从 SolMan 拉取最新状态", { icon: "refresh" });
-        }, 900);
-      });
-      root.querySelector("[data-action='poll-charm']").addEventListener("click", (e) => {
-        e.currentTarget.classList.add("is-loading");
-        setTimeout(() => {
-          e.currentTarget.classList.remove("is-loading");
-          SA.toast("CR-44103 状态未变化 · 仍在 Basis 审批中");
-        }, 900);
-      });
-      root.querySelector("[data-action='toggle-sync']").addEventListener("click", (e) => {
-        e.currentTarget.classList.toggle("is-on");
-        SA.toast(e.currentTarget.classList.contains("is-on") ? "自动同步已开启" : "自动同步已暂停");
-      });
-      root.querySelector("[data-action='mock-approve']").addEventListener("click", () => {
-        SA.toast("演示：Basis 审批通过，将自动创建 CD", { icon: "check-circle" });
-      });
+      const syncBtn = root.querySelector("[data-action='sync-charm']");
+      if (syncBtn) {
+        syncBtn.addEventListener("click", (e) => {
+          const btn = e.currentTarget;
+          btn.classList.add("is-loading");
+          SA.sequence(() => {
+            btn.classList.remove("is-loading");
+            const sub = document.getElementById("charm-sync-sub");
+            if (sub) sub.textContent = "最后一次同步 刚刚 · 自动同步每 60s";
+            SA.toast("已从 SolMan 拉取最新状态", { icon: "refresh" });
+          }, 900);
+        });
+      }
+      const pollBtn = root.querySelector("[data-action='poll-charm']");
+      if (pollBtn) {
+        pollBtn.addEventListener("click", (e) => {
+          const btn = e.currentTarget;
+          btn.classList.add("is-loading");
+          SA.sequence(() => {
+            btn.classList.remove("is-loading");
+            SA.toast("CR-44103 状态未变化 · 仍在 Basis 审批中");
+          }, 900);
+        });
+      }
+      const syncSwitch = root.querySelector("[data-action='toggle-sync']");
+      if (syncSwitch) {
+        syncSwitch.addEventListener("click", (e) => {
+          const sw = e.currentTarget;
+          sw.classList.toggle("is-on");
+          SA.toast(sw.classList.contains("is-on") ? "自动同步已开启" : "自动同步已暂停");
+        });
+      }
+      const approveBtn = root.querySelector("[data-action='mock-approve']");
+      if (approveBtn) {
+        approveBtn.addEventListener("click", () => {
+          SA.toast("演示：Basis 审批通过，将自动创建 CD", { icon: "check-circle" });
+        });
+      }
       const newCr = () => {
         SA.modal({
           title: "新建 Change Request",

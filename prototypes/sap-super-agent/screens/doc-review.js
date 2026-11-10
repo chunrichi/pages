@@ -298,6 +298,18 @@
       if (mdPre) mdPre.textContent = MD_SOURCE;
       const regenBtn = root.querySelector("[data-action='ai-regen']");
       const regenCount = root.querySelector("#regen-count");
+      /** 重触发一次工具类动画（fresh render 或 remove → reflow → add）。 */
+      function replay(el, cls) {
+        if (!el || SA.isShot) return;
+        el.classList.remove(cls);
+        void el.offsetWidth;
+        el.classList.add(cls);
+      }
+      /** 批注状态徽标：解决后给一次 scale 反馈（卡片本身有 .55 透明度，不挂动画）。 */
+      function flashCheck(card) {
+        const n = card && card.querySelector(".annot-card__n");
+        if (n) replay(n, "anim-scale");
+      }
       function unresolved() {
         return Array.from(root.querySelectorAll(".annot-card.is-unresolved"));
       }
@@ -318,6 +330,7 @@
           const source = root.querySelector("#doc-source");
           if (paper) paper.hidden = isSource;
           if (source) source.hidden = !isSource;
+          replay(isSource ? source : paper, "anim-fade");
         });
       });
       const download = root.querySelector("[data-action='download-md']");
@@ -350,7 +363,7 @@
               variant: "primary",
               onClick: () => {
                 regenBtn.classList.add("is-loading");
-                setTimeout(() => {
+                SA.sequence(() => {
                   regenBtn.classList.remove("is-loading");
                   regenBtn.dataset.done = "1";
                   regenBtn.innerHTML = ic("check") + " 已生成 v3";
@@ -361,12 +374,13 @@
                   const versions = root.querySelector(".outline-versions");
                   if (versions && !versions.querySelector('[data-v3]')) {
                     const row = document.createElement("div");
-                    row.className = "outline-version";
+                    row.className = "outline-version anim-rise";
                     row.dataset.v3 = "1";
                     row.innerHTML = '<span class="mono">v3</span><span>AI 根据批注生成 · 刚刚</span>';
                     const head = versions.querySelector(".outline-versions__head");
                     if (head) head.after(row);
                   }
+                  // 横幅由自身 .ai-regen-banner 的 sa-rise 在 hidden → 可见时入场
                   const banner = root.querySelector("#ai-regen-banner");
                   if (banner) banner.hidden = false;
                   unresolved().forEach((c) => {
@@ -374,6 +388,7 @@
                     c.classList.remove("is-unresolved");
                     const n = c.querySelector(".annot-card__n");
                     if (n) n.textContent = "✓";
+                    flashCheck(c);
                   });
                   if (regenCount) regenCount.textContent = "0";
                   if (regenBtn) {
@@ -425,6 +440,7 @@
           card.classList.remove("is-unresolved");
           card.classList.add("is-resolved");
           b.innerHTML = ic("check") + " 已解决";
+          flashCheck(card);
           SA.toast("批注已标记为解决");
           updateAnnotCount();
           if (typeof updateRegenCount === "function") updateRegenCount();
@@ -453,7 +469,7 @@
         const list = root.querySelector(".annot-list");
         const ai = list.querySelector(".annot-ai");
         const card = document.createElement("div");
-        card.className = "annot-card is-unresolved";
+        card.className = "annot-card is-unresolved anim-fade";
         card.dataset.annotCard = "new";
         card.innerHTML =
           '<div class="annot-card__head"><span class="avatar avatar--sm" data-tone="ink">陈</span><span class="grow"><b>陈曦</b><em>业务方 · 刚刚</em></span><span class="annot-card__n">新</span></div>' +
@@ -470,6 +486,7 @@
         card.querySelector("[data-action='resolve-annot']").addEventListener("click", (e) => {
           card.classList.add("is-resolved");
           e.currentTarget.innerHTML = ic("check") + " 已解决";
+          flashCheck(card);
           updateAnnotCount();
         });
       }
@@ -512,7 +529,7 @@
               variant: approve ? "primary" : "danger",
               onClick: () => {
                 SA.toast(approve ? "G1 已通过，进入技术设计" : "已驳回，等待修订");
-                setTimeout(() => SA.go("#/demands/R-2041"), 400);
+                SA.after(() => SA.go("#/demands/R-2041"), 400);
               },
             },
           ],
@@ -524,7 +541,7 @@
         if (srcBtn) srcBtn.click();
       }
       if (ctx.query && ctx.query.get("regen") === "1") {
-        setTimeout(() => { if (regenBtn) regenBtn.click(); }, 120);
+        SA.after(() => { if (regenBtn) regenBtn.click(); }, 120);
       }
       root.querySelectorAll("[data-action='reject']").forEach((b) => b.addEventListener("click", () => decide(false)));
       // segmented annot tabs

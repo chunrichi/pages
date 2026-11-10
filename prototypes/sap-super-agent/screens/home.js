@@ -30,10 +30,101 @@
       </div>`;
   }
 
+  function demandHomeCard(demands) {
+    return `
+          <section class="card home-demands">
+              <div class="card-head">
+                <h3>正在推进</h3>
+                <div class="row gap-2">
+                  <div class="segmented home-filter">
+                    <button class="is-active">全部</button>
+                    <button>待我确认</button>
+                    <button>我负责的</button>
+                  </div>
+                  <a class="link sm" href="#/demands">全部需求 ${ic("arrow-right")}</a>
+                </div>
+              </div>
+              <div class="demand-list">
+                ${demands
+                  .map(
+                    (d) => `
+                  <a class="demand-row" href="#/demands/${d.id}">
+                    <span class="demand-row__id cell-mono">${d.id}</span>
+                    <span class="demand-row__main">
+                      <span class="demand-row__title">${SA.h(d.title)}</span>
+                      <span class="demand-row__meta">
+                        <span class="tag tag--mono">${d.jira}</span>
+                        <span class="demand-row__dot"></span>
+                        <span>${SA.h(d.owner.join("、"))}</span>
+                        <span class="demand-row__dot"></span>
+                        <span>更新于 ${d.updated}</span>
+                      </span>
+                    </span>
+                    <span class="demand-row__stage">
+                      <span class="demand-row__stage-name">${SA.h(d.stage)}<em>0${d.stageIndex + 1}</em></span>
+                      <span class="stage-rail">
+                        ${[0, 1, 2, 3, 4, 5]
+                          .map((i) => `<span class="stage-seg ${i < d.stageIndex ? "is-done" : i === d.stageIndex ? "is-current" : ""}"></span>`)
+                          .join("")}
+                      </span>
+                    </span>
+                    <span class="demand-row__owners">
+                      ${d.owner
+                        .slice(0, 2)
+                        .map((o, i) => `<span class="avatar avatar--sm" data-tone="${["blue", "teal", "violet", "amber"][i % 4]}">${SA.h(o[0])}</span>`)
+                        .join("")}
+                    </span>
+                    <span class="pill pill--${d.statusTone}"><span class="dot"></span>${SA.h(d.status)}</span>
+                    <span class="demand-row__chev">${ic("chevron-right")}</span>
+                  </a>`
+                  )
+                  .join("")}
+              </div>
+              <div class="card-foot">
+                <span class="sm">AI 已为 4 个需求生成 9 份过程文档</span>
+                <span class="grow"></span>
+                <a class="link sm" href="#/demands">查看全部 ${ic("arrow-right")}</a>
+              </div>
+            </section>`;
+  }
+
+  function taskHomeCard() {
+    const tone = { "进行中": "blue", "等待我回答": "amber", "可领取": "slate", "已完成": "green" };
+    return `
+          <section class="card home-demands">
+            <div class="card-head">
+              <h3>我的任务</h3>
+              <div class="row gap-2">
+                <span class="sm">4 个在办 · 1 个等待回答</span>
+                <a class="link sm" href="#/tasks">任务台 ${ic("arrow-right")}</a>
+              </div>
+            </div>
+            <div class="demand-list">
+              ${SA.data.tasks.map((t) => `
+                <a class="demand-row" href="#/tasks">
+                  <span class="demand-row__id cell-mono">${t.id}</span>
+                  <span class="demand-row__main">
+                    <span class="demand-row__title">${SA.h(t.title)}</span>
+                    <span class="demand-row__meta"><span class="tag tag--mono">${t.repo}</span><span class="demand-row__dot"></span><span>${t.demand} · ${t.stage}</span><span class="demand-row__dot"></span><span>${t.updated}</span></span>
+                  </span>
+                  <span class="demand-row__stage"><span class="tag tag--mono">${t.type}</span></span>
+                  <span class="demand-row__owners"><span class="avatar avatar--sm" data-tone="blue">${SA.h(t.owner[0])}</span></span>
+                  <span class="pill pill--${tone[t.state] || "slate"}"><span class="dot"></span>${SA.h(t.state)}</span>
+                  <span class="demand-row__chev">${ic("chevron-right")}</span>
+                </a>`).join("")}
+            </div>
+            <div class="card-foot">
+              <span class="sm">租约、执行器与上下文包在任务台查看</span>
+              <span class="grow"></span>
+              <a class="link sm" href="#/tasks">全部任务 ${ic("arrow-right")}</a>
+            </div>
+          </section>`;
+  }
+
   SA.register("home", {
     title: "总览",
     render() {
-      const isIT = SA.data.user.role === "SAP IT";
+      const isIT = SA.view === "it";
       const demands = SA.data.demands.slice(0, 5);
       return `
       <div class="page page-home">
@@ -44,11 +135,16 @@
             <h1>${greeting()}，${SA.h(SA.data.user.name)}</h1>
             <p class="page-head__desc">${isIT
               ? "4 个开发任务在推进，1 个等待你回答。Super Agent 正在生成功能设计文档。"
-              : "6 个需求在推进，2 个需要你确认。今天有 1 个上线文档等待审批。"}</p>
+              : "6 个需求在推进，3 个需要你确认。今天有 1 个上线文档等待审批。"}</p>
           </div>
           <div class="home-hero__actions">
-            <a class="btn btn--primary" href="#/demands/new">${ic("plus")} 新建需求</a>
-            <a class="btn" href="#/ops/queue">${ic("activity")} 运行看板</a>
+            ${
+              isIT
+                ? '<a class="btn btn--primary" href="#/tasks">' + ic("inbox") + " 打开任务台</a>" +
+                  '<a class="btn" href="#/ops/queue">' + ic("activity") + " 队列与事件</a>"
+                : '<a class="btn btn--primary" href="#/demands/new">' + ic("plus") + " 新建需求</a>" +
+                  '<a class="btn" href="#/tasks">' + ic("inbox") + " 待我确认</a>"
+            }
           </div>
           <div class="home-hero__meta">
             <span class="mono">11 月 11 日 · 星期三</span>
@@ -60,67 +156,21 @@
         </header>
 
         <section class="stats-strip">
-          ${statCell("进行中的需求", 6, "", "较上周 +2", "blue", "var(--blue)")}
-          ${statCell("待我确认", 2, "", "R-2041 · R-2045", "amber")}
-          ${statCell("AI 生成文档", 18, "", "本周 · 节省约 6.4h", "teal")}
-          ${statCell("平均流转时长", 3.2, "天", "较上季度 -0.8 天", "violet", "var(--violet)")}
+          ${
+            isIT
+              ? statCell("进行中任务", 4, "", "较昨日 +1", "blue", "var(--blue)") +
+                statCell("等待我回答", 1, "", "T-8846 · 18 分钟前", "amber") +
+                statCell("今日完成", 6, "", "较昨日 +2", "teal") +
+                statCell("队列 p95", 1.8, "s", "24 条事件 · 成功率 99.2%", "violet", "var(--violet)")
+              : statCell("进行中的需求", 6, "", "较上周 +2", "blue", "var(--blue)") +
+                statCell("待我确认", 3, "", "R-2041 · R-2045 · R-2046", "amber") +
+                statCell("AI 生成文档", 18, "", "本周 · 节省约 6.4h", "teal") +
+                statCell("平均流转时长", 3.2, "天", "较上季度 -0.8 天", "violet", "var(--violet)")
+          }
         </section>
 
         <div class="home-grid">
-          <section class="card home-demands">
-            <div class="card-head">
-              <h3>正在推进</h3>
-              <div class="row gap-2">
-                <div class="segmented home-filter">
-                  <button class="is-active">全部</button>
-                  <button>待我确认</button>
-                  <button>我负责的</button>
-                </div>
-                <a class="link sm" href="#/demands">全部需求 ${ic("arrow-right")}</a>
-              </div>
-            </div>
-            <div class="demand-list">
-              ${demands
-                .map(
-                  (d) => `
-                <a class="demand-row" href="#/demands/${d.id}">
-                  <span class="demand-row__id cell-mono">${d.id}</span>
-                  <span class="demand-row__main">
-                    <span class="demand-row__title">${SA.h(d.title)}</span>
-                    <span class="demand-row__meta">
-                      <span class="tag tag--mono">${d.jira}</span>
-                      <span class="demand-row__dot"></span>
-                      <span>${SA.h(d.owner.join("、"))}</span>
-                      <span class="demand-row__dot"></span>
-                      <span>更新于 ${d.updated}</span>
-                    </span>
-                  </span>
-                  <span class="demand-row__stage">
-                    <span class="demand-row__stage-name">${SA.h(d.stage)}<em>0${d.stageIndex + 1}</em></span>
-                    <span class="stage-rail">
-                      ${[0, 1, 2, 3, 4, 5]
-                        .map((i) => `<span class="stage-seg ${i < d.stageIndex ? "is-done" : i === d.stageIndex ? "is-current" : ""}"></span>`)
-                        .join("")}
-                    </span>
-                  </span>
-                  <span class="demand-row__owners">
-                    ${d.owner
-                      .slice(0, 2)
-                      .map((o, i) => `<span class="avatar avatar--sm" data-tone="${["blue", "teal", "violet", "amber"][i % 4]}">${SA.h(o[0])}</span>`)
-                      .join("")}
-                  </span>
-                  <span class="pill pill--${d.statusTone}"><span class="dot"></span>${SA.h(d.status)}</span>
-                  <span class="demand-row__chev">${ic("chevron-right")}</span>
-                </a>`
-                )
-                .join("")}
-            </div>
-            <div class="card-foot">
-              <span class="sm">AI 已为 4 个需求生成 9 份过程文档</span>
-              <span class="grow"></span>
-              <a class="link sm" href="#/demands">查看全部 ${ic("arrow-right")}</a>
-            </div>
-          </section>
+          ${isIT ? taskHomeCard() : demandHomeCard(demands)}
 
           <aside class="home-side">
             <section class="card agent-live">
@@ -169,16 +219,42 @@
                   <div><span class="mono">成功率</span><strong>99.2%</strong></div>
                   <div><span class="mono">p95</span><strong>1.8s</strong></div>
                 </div>
-                <a class="link sm" href="#/ops/agents">Agent 运行 ${ic("arrow-right")}</a>
+                ${isIT ? '<a class="link sm" href="#/ops/agents">Agent 运行 ' + ic("arrow-right") + "</a>" : ""}
               </div>
             </section>
 
             <section class="card gate-card">
               <div class="card-head">
-                <h3>待我确认</h3>
-                <span class="tag tag--amber">2</span>
+                <h3>${isIT ? "待我处理" : "待我确认"}</h3>
+                <span class="tag tag--amber">3</span>
               </div>
-              <a class="gate-item" href="#/demands/R-2041/doc/functional-design">
+              ${
+                isIT
+                  ? `<a class="gate-item" href="#/ops/queue">
+                <span class="gate-item__icon">${ic("alert-triangle")}</span>
+                <span class="gate-item__main">
+                  <span class="gate-item__title">死信 · CRQ-2026-0842</span>
+                  <span class="gate-item__meta">重试 1 次仍失败 · 队列等待处理</span>
+                </span>
+                <span class="gate-item__arrow">${ic("chevron-right")}</span>
+              </a>
+              <a class="gate-item" href="#/tasks">
+                <span class="gate-item__icon gate-item__icon--violet">${ic("message")}</span>
+                <span class="gate-item__main">
+                  <span class="gate-item__title">任务 T-8846 · 等待回答</span>
+                  <span class="gate-item__meta">补充 MES 回写异常场景测试</span>
+                </span>
+                <span class="gate-item__arrow">${ic("chevron-right")}</span>
+              </a>
+              <a class="gate-item" href="#/demands/R-2045/release">
+                <span class="gate-item__icon gate-item__icon--violet">${ic("play")}</span>
+                <span class="gate-item__main">
+                  <span class="gate-item__title">上线执行 · R-2045</span>
+                  <span class="gate-item__meta">11-12 窗口 · 等待执行</span>
+                </span>
+                <span class="gate-item__arrow">${ic("chevron-right")}</span>
+              </a>`
+                  : `<a class="gate-item" href="#/demands/R-2041/doc/functional-design">
                 <span class="gate-item__icon">${ic("git-commit")}</span>
                 <span class="gate-item__main">
                   <span class="gate-item__title">功能设计 v2 · R-2041</span>
@@ -194,10 +270,19 @@
                 </span>
                 <span class="gate-item__arrow">${ic("chevron-right")}</span>
               </a>
+              <a class="gate-item" href="#/demands/R-2046">
+                <span class="gate-item__icon">${ic("message")}</span>
+                <span class="gate-item__main">
+                  <span class="gate-item__title">功能设计 v1 · R-2046</span>
+                  <span class="gate-item__meta">等待澄清 · 2 个问题未回答</span>
+                </span>
+                <span class="gate-item__arrow">${ic("chevron-right")}</span>
+              </a>`
+              }
               <div class="card-foot">
-                <span class="sm">确认后将触发 Teams 通知</span>
+                <span class="sm">${isIT ? "死信与租约事件实时刷新" : "确认后将触发 Teams 通知"}</span>
                 <span class="grow"></span>
-                <a class="link sm" href="#/tasks">全部待办 ${ic("arrow-right")}</a>
+                <a class="link sm" href="${isIT ? "#/ops/queue" : "#/tasks"}">${isIT ? "全部队列" : "全部待办"} ${ic("arrow-right")}</a>
               </div>
             </section>
           </aside>

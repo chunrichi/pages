@@ -211,7 +211,7 @@
             <p class="page-head__desc">从 SAP 业务提出到上线归档的全部需求。过程文档、审批与工单状态都在同一条时间线上。</p>
           </div>
           <div class="page-head__actions">
-            <button class="btn" data-action="sync-jira">${ic("refresh")} 同步 JIRA</button>
+            ${SA.view === "business" ? "" : '<button class="btn" data-action="sync-jira">' + ic("refresh") + " 同步 JIRA</button>"}
             <a class="btn btn--primary" href="#/demands/new">${ic("plus")} 新建需求</a>
           </div>
         </div>
@@ -220,7 +220,7 @@
           <div class="segmented view-switch">
             <button data-view="list" class="${view === "list" ? "is-active" : ""}">${ic("list")} 列表</button>
             <button data-view="kanban" class="${view === "kanban" ? "is-active" : ""}">${ic("kanban")} 看板</button>
-            <button data-view="backlog" class="${view === "backlog" ? "is-active" : ""}">${ic("trello")} Backlog</button>
+            ${SA.view === "business" ? "" : '<button data-view="backlog" class="' + (view === "backlog" ? "is-active" : "") + '">' + ic("trello") + " Backlog</button>"}
           </div>
           <div class="toolbar__spacer"></div>
           <div class="search toolbar__search">
@@ -233,7 +233,7 @@
         </div>
 
         <div id="demand-view" class="demand-view">
-          ${view === "kanban" ? kanbanView(SA.data.demands) : view === "backlog" ? backlogView(SA.data.demands) : listView(SA.data.demands)}
+          ${view === "kanban" ? kanbanView(SA.data.demands) : view === "backlog" && SA.view !== "business" ? backlogView(SA.data.demands) : listView(SA.data.demands)}
         </div>
       </div>`;
     },
@@ -327,7 +327,7 @@
       if (sync) {
         sync.addEventListener("click", () => {
           sync.classList.add("is-loading");
-          setTimeout(() => {
+          SA.sequence(() => {
             sync.classList.remove("is-loading");
             SA.toast("JIRA Backlog 已同步 · 7 个 issue", { icon: "refresh" });
           }, 900);

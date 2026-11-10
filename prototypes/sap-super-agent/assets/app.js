@@ -8,7 +8,8 @@
   const SA = (window.SA = window.SA || {});
   SA.screens = SA.screens || {};
   SA.data = SA.data || {};
-  SA.timers = [];
+  SA.timers = []; /* setInterval：路由切换清理 */
+  SA.timeouts = []; /* setTimeout（SA.after）：路由切换清理 */
 
   SA.register = function (name, spec) {
     SA.screens[name] = spec;
@@ -18,7 +19,70 @@
   if (SA.isShot) document.documentElement.classList.add("shot-mode");
 
   /* ------------------------------------------------------------
-     demo data
+     motion · 时长 / 缓动只走 token，见 docs/01-设计系统.md §8
+     三种模式：正常 / prefers-reduced-motion / ?shot=1
+     ------------------------------------------------------------ */
+  const DUR_FALLBACK = {
+    "--dur-1": 140,
+    "--dur-2": 220,
+    "--dur-3": 360,
+    "--dur-4": 560,
+    "--dur-5": 900,
+    "--dur-exit": 120,
+    "--stagger": 38,
+  };
+  const durCache = {};
+  const reduceMotion = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+
+  SA.isReducedMotion = function () {
+    return !!(reduceMotion && reduceMotion.matches);
+  };
+  /** 读取动效 token 的毫秒数；reduced-motion 下恒为 0。 */
+  SA.dur = function (token) {
+    if (SA.isReducedMotion()) return 0;
+    if (Object.prototype.hasOwnProperty.call(durCache, token)) return durCache[token];
+    const raw = String(
+      getComputedStyle(document.documentElement).getPropertyValue(token) || ""
+    ).trim();
+    const n = parseFloat(raw);
+    const ms = isNaN(n) ? DUR_FALLBACK[token] || 0 : /m?s$/.test(raw) && !/ms$/.test(raw) ? n * 1000 : n;
+    durCache[token] = ms;
+    return ms;
+  };
+  /** 回到顶部；reduced-motion 下直接跳转。 */
+  SA.scrollTop = function (opts) {
+    const smooth = !!(opts && opts.smooth) && !SA.isReducedMotion();
+    if (smooth) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  };
+  /** 页面序列延时：登记在 SA.timers，路由切换统一清理；触发后自动出队。 */
+  SA.after = function (fn, ms) {
+    const run = () => {
+      const idx = SA.timeouts.indexOf(id);
+      if (idx >= 0) SA.timeouts.splice(idx, 1);
+      fn();
+    };
+    const id = setTimeout(run, Math.max(0, ms || 0));
+    SA.timeouts.push(id);
+    return id;
+  };
+  /** 演示序列延时：reduced-motion 下压缩到 ≤ 80ms，避免等待。 */
+  SA.sequence = function (fn, ms) {
+    return SA.after(fn, SA.isReducedMotion() ? Math.min(ms || 0, 80) : ms || 0);
+  };
+  /** 不随路由清理的一次性延时，只用于外壳行为（toast 自动消失等）。 */
+  SA.later = function (fn, ms) {
+    return setTimeout(fn, Math.max(0, ms || 0));
+  };
+
+  /* ------------------------------------------------------------
+     identity · view · permission
+     工作视角（view）/ 业务角色（role）/ 管理权限（admin）三层分离
+     详见 docs/06-角色权限与管理.md
      ------------------------------------------------------------ */
   SA.data.user = {
     name: "陈曦",
@@ -29,10 +93,106 @@
     email: "chen.xi@sap.example",
   };
 
+  SA.auth = {
+    account: {
+      name: "陈曦",
+      email: "chen.xi@sap.example",
+      groupKey: "FIN-SH",
+      groupName: "财务共享组",
+      businessRole: "SAP 业务",
+      views: ["business", "it"],
+      admin: "platform", // "platform" | "group" | null
+      adminGroups: ["FIN-SH"],
+      invitedBy: "林桦",
+      joinedAt: "2025-03-18",
+    },
+    previewMember: false,
+    previewAdmin: null, // "group" 演示小组管理员视角（只读集成、仅本组参数）
+    level() {
+      return this.previewAdmin || this.account.admin;
+    },
+    can(cap) {
+      const a = this.account;
+      const level = this.level();
+      // 成员预览下，管理能力与模板维护能力都收起（只读）
+      if (this.previewMember && (cap.indexOf("admin.") === 0 || cap.indexOf("crq.templates") === 0)) return false;
+      switch (cap) {
+        case "admin.access":
+          return !!level;
+        case "admin.groups.create":
+          return level === "platform";
+        case "admin.groups.manage":
+        case "admin.members.invite":
+        case "admin.members.role":
+        case "admin.members.admin":
+        case "admin.members.remove":
+          return level === "platform" || (level === "group" && a.adminGroups.length > 0);
+        case "admin.members.transfer":
+          return level === "platform";
+        case "admin.integrations.manage":
+          return level === "platform";
+        case "admin.audit.view":
+          return !!level;
+        case "crq.templates.manage":
+          return !!level; // 小组模板：小组管理员 / 平台管理员；成员只读
+        case "crq.templates.base":
+          return level === "platform"; // 平台基础模板：仅平台管理员
+        default:
+          return false;
+      }
+    },
+    isAdmin() {
+      return this.can("admin.access");
+    },
+  };
+
+  SA.view = "business";
+  SA.VIEW_META = {
+    business: { label: "SAP 业务", route: "#/home" },
+    it: { label: "SAP IT", route: "#/tasks" },
+  };
+  SA.viewDefaultRoute = function () {
+    return (SA.VIEW_META[SA.view] || SA.VIEW_META.business).route;
+  };
+  SA.isReadOnly = function () {
+    return SA.view === "business";
+  };
+  SA.setView = function (view, opts) {
+    if (!SA.auth.account.views.includes(view) || SA.view === view) return;
+    SA.view = view;
+    SA.data.user.role = view === "it" ? "SAP IT" : SA.auth.account.businessRole;
+    const spec = currentRouteSpec();
+    applyShell();
+    if (spec && spec.views && !spec.views.includes(view)) {
+      SA.go(SA.viewDefaultRoute());
+    } else {
+      render();
+    }
+    if (!opts || !opts.silent) {
+      SA.toast("已切换到 " + SA.VIEW_META[view].label + " 视角", { icon: "user" });
+    }
+  };
+  SA.readOnlyBar = function (text) {
+    return (
+      '<div class="readonly-bar">' +
+      window.ic("eye") +
+      "<span><b>只读 · SAP 业务视角</b>" +
+      (text || "业务方可以查看，创建与审批由 SAP IT 完成。") +
+      "</span>" +
+      '<span class="grow"></span>' +
+      '<button class="btn btn--sm" data-action="switch-view" data-view="it">切换到 SAP IT 视角</button>' +
+      "</div>"
+    );
+  };
+
+  /* ------------------------------------------------------------
+     demo data
+     ------------------------------------------------------------ */
+
   SA.data.groups = [
-    { key: "FIN-SH", name: "财务共享组", members: 12, tone: "blue", desc: "财务共享 / 采购到付款" },
-    { key: "SCM-CN", name: "供应链组", members: 9, tone: "teal", desc: "销售 / 物流 / 库存" },
-    { key: "MFG-CN", name: "制造组", members: 15, tone: "violet", desc: "生产 / 质量 / MES" },
+    { key: "FIN-SH", name: "财务共享组", members: 7, tone: "blue", desc: "财务共享 / 采购到付款", template: "PDO 六阶段 · v4", approver: "林桦", admins: ["陈曦", "林桦", "王栎"] },
+    { key: "SCM-CN", name: "供应链组", members: 5, tone: "teal", desc: "销售 / 物流 / 库存", template: "PDO 六阶段 · v4", approver: "郑一", admins: ["郑一"] },
+    { key: "MFG-CN", name: "制造组", members: 6, tone: "violet", desc: "生产 / 质量 / MES", template: "默认三阶段 · v2", approver: "赵岑", admins: ["赵岑"] },
   ];
 
   SA.data.notifications = [
@@ -318,9 +478,10 @@
     el.className = "toast";
     el.innerHTML = (window.ic ? ic((opts && opts.icon) || "check-circle") : "") + "<span>" + SA.h(msg) + "</span>";
     stack.appendChild(el);
-    setTimeout(() => {
+    // toast 属于外壳行为，不跟路由清理走，否则切页会留下永不消失的 toast
+    SA.later(() => {
       el.classList.add("is-leaving");
-      setTimeout(() => el.remove(), 260);
+      SA.later(() => el.remove(), SA.dur("--dur-2") + 40);
     }, (opts && opts.duration) || 2600);
   };
   SA.go = function (hash) {
@@ -336,13 +497,14 @@
       const decimals = (el.dataset.decimals && parseInt(el.dataset.decimals, 10)) || 0;
       const suffix = el.dataset.suffix || "";
       const prefix = el.dataset.prefix || "";
-      if (SA.isShot || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (SA.isShot || SA.isReducedMotion()) {
         el.textContent = prefix + target.toFixed(decimals) + suffix;
         return;
       }
       const start = performance.now();
-      const dur = 900;
+      const dur = SA.dur("--dur-5") || 900;
       function tick(now) {
+        if (!el.isConnected) return;
         const p = Math.min(1, (now - start) / dur);
         const eased = 1 - Math.pow(1 - p, 3);
         el.textContent = prefix + (target * eased).toFixed(decimals) + suffix;
@@ -366,11 +528,20 @@
   };
   SA.clearTimers = function () {
     SA.timers.forEach((t) => clearInterval(t));
+    SA.timeouts.forEach((t) => clearTimeout(t));
     SA.timers = [];
+    SA.timeouts = [];
   };
   SA.onTimer = function (fn, ms) {
     SA.timers.push(setInterval(fn, ms));
     return SA.timers[SA.timers.length - 1];
+  };
+  /** 停掉单个循环计时器并同步清理登记表（暂停态用，如队列暂停）。 */
+  SA.offTimer = function (id) {
+    if (!id) return;
+    clearInterval(id);
+    const idx = SA.timers.indexOf(id);
+    if (idx >= 0) SA.timers.splice(idx, 1);
   };
   SA.esc = SA.h;
 
@@ -524,16 +695,20 @@
     { group: "跳转", icon: "home", label: "总览", sub: "工作台", route: "#/home" },
     { group: "跳转", icon: "layers", label: "需求列表", sub: "6 个需求", route: "#/demands" },
     { group: "跳转", icon: "plus", label: "新建需求", sub: "N", route: "#/demands/new" },
-    { group: "跳转", icon: "inbox", label: "任务台", sub: "3 个待处理", route: "#/tasks" },
-    { group: "跳转", icon: "file-text", label: "CRQ 工单", sub: "12 个工单", route: "#/tools/crq" },
-    { group: "跳转", icon: "git-branch", label: "ChaRM 变更中心", sub: "6 个变更", route: "#/tools/charm" },
-    { group: "跳转", icon: "activity", label: "队列与事件", sub: "24 条待处理", route: "#/ops/queue" },
-    { group: "跳转", icon: "bot", label: "Agent 运行", sub: "3 个运行中", route: "#/ops/agents" },
+    { group: "跳转", icon: "inbox", label: "任务台", labelBusiness: "待我确认", sub: "3 个待处理", route: "#/tasks" },
+    { group: "跳转", icon: "book-open", label: "文档评审", sub: "R-2041", route: "#/demands/R-2041/doc/functional-design", views: ["it"] },
+    { group: "跳转", icon: "file-text", label: "CRQ 工单", sub: "12 个工单", route: "#/tools/crq", views: ["it"] },
+    { group: "跳转", icon: "git-branch", label: "ChaRM 变更中心", sub: "6 个变更", route: "#/tools/charm", views: ["it"] },
+    { group: "跳转", icon: "activity", label: "队列与事件", sub: "24 条待处理", route: "#/ops/queue", views: ["it"] },
+    { group: "跳转", icon: "bot", label: "Agent 运行", sub: "3 个运行中", route: "#/ops/agents", views: ["it"] },
     { group: "跳转", icon: "database", label: "知识库", sub: "128 篇文档", route: "#/knowledge" },
     { group: "命令", icon: "check-square", label: "确认功能设计 v2", sub: "R-2041", route: "#/demands/R-2041/doc/functional-design" },
-    { group: "命令", icon: "upload", label: "提交上线审批", sub: "R-2045", route: "#/demands/R-2045/release" },
-    { group: "命令", icon: "monitor", label: "在 VSCode 中打开需求", sub: "R-2042", route: "#/tasks" },
-    { group: "命令", icon: "settings", label: "打开集成设置", sub: "", route: "#/settings" },
+    { group: "命令", icon: "upload", label: "提交上线审批", labelBusiness: "确认上线审批", sub: "R-2045", route: "#/demands/R-2045/release" },
+    { group: "命令", icon: "monitor", label: "在 VSCode 中打开需求", sub: "R-2042", route: "#/tasks", views: ["it"] },
+    { group: "命令", icon: "settings", label: "个人设置", sub: "账户与设备", route: "#/settings?tab=account" },
+    { group: "命令", icon: "shield", label: "管理控制台", sub: "小组 · 集成 · 审计", route: "#/admin?tab=groups", cap: "admin.access" },
+    { group: "命令", icon: "user", label: "切换到 SAP IT 视角", sub: "业务 / IT", run: () => SA.setView("it"), views: ["business"] },
+    { group: "命令", icon: "user", label: "切换到 SAP 业务 视角", sub: "业务 / IT", run: () => SA.setView("business"), views: ["it"] },
   ];
   const recentDemands = SA.data.demands.map((d) => ({
     group: "需求",
@@ -548,12 +723,12 @@
 
   function renderCommands(q) {
     const query = (q || "").trim().toLowerCase();
-    cmdFiltered = allCommands.filter(
-      (c) =>
-        !query ||
-        c.label.toLowerCase().includes(query) ||
-        (c.sub || "").toLowerCase().includes(query)
-    );
+    cmdFiltered = allCommands.filter((c) => {
+      if (c.views && !c.views.includes(SA.view)) return false;
+      if (c.cap && !SA.auth.can(c.cap)) return false;
+      const label = commandLabel(c);
+      return !query || label.toLowerCase().includes(query) || (c.sub || "").toLowerCase().includes(query);
+    });
     cmdIndex = 0;
     const body = document.getElementById("cmd-results");
     if (!cmdFiltered.length) {
@@ -576,12 +751,15 @@
         '">' +
         ic(c.icon) +
         "<span>" +
-        SA.h(c.label) +
+        SA.h(commandLabel(c)) +
         "</span>" +
         (c.sub ? '<span class="cmd__item__sub">' + SA.h(c.sub) + "</span>" : "") +
         "</div>";
     });
     body.innerHTML = html;
+  }
+  function commandLabel(c) {
+    return SA.view === "business" && c.labelBusiness ? c.labelBusiness : c.label;
   }
   function openCommand() {
     const modal = document.getElementById("command-modal");
@@ -590,13 +768,14 @@
     const input = document.getElementById("cmd-input");
     input.value = "";
     renderCommands("");
-    setTimeout(() => input.focus(), 30);
+    SA.later(() => input.focus(), 30);
   }
   function runCommand(i) {
     const c = cmdFiltered[i];
     if (!c) return;
     closeOverlays();
-    SA.go(c.route);
+    if (c.run) c.run();
+    else SA.go(c.route);
   }
 
   /* ------------------------------------------------------------
@@ -613,16 +792,31 @@
     { re: /^\/demands\/([^/]+)\/doc\/([^/]+)$/, screen: "doc-review", nav: "docs", title: "文档评审", params: ["id", "doc"] },
     { re: /^\/demands\/([^/]+)\/release$/, screen: "release", nav: "demands", title: "上线与审批", params: ["id"] },
     { re: /^\/demands\/([^/]+)$/, screen: "demand-detail", nav: "demands", title: "需求详情", params: ["id"] },
-    { re: /^\/tasks$/, screen: "tasks", nav: "tasks", title: "任务台" },
-    { re: /^\/tools\/crq\/new$/, screen: "crq-new", nav: "crq", title: "新建 CRQ" },
-    { re: /^\/tools\/crq\/templates$/, screen: "crq-templates", nav: "crq", title: "CRQ 模板" },
+    { re: /^\/tasks$/, screen: "tasks", nav: "tasks", title: "任务台", titleBusiness: "待我确认" },
+    { re: /^\/tools\/crq\/new$/, screen: "crq-new", nav: "crq", title: "新建 CRQ", views: ["it"] },
+    { re: /^\/tools\/crq\/templates$/, screen: "crq-templates", nav: "crq", title: "CRQ 模板", views: ["it"] },
     { re: /^\/tools\/crq$/, screen: "crq", nav: "crq", title: "CRQ 工单" },
     { re: /^\/tools\/charm$/, screen: "charm", nav: "charm", title: "ChaRM 变更" },
-    { re: /^\/ops\/queue$/, screen: "queue", nav: "queue", title: "队列与事件" },
-    { re: /^\/ops\/agents$/, screen: "agents", nav: "agents", title: "Agent 运行" },
+    { re: /^\/ops\/queue$/, screen: "queue", nav: "queue", title: "队列与事件", views: ["it"] },
+    { re: /^\/ops\/agents$/, screen: "agents", nav: "agents", title: "Agent 运行", views: ["it"] },
     { re: /^\/knowledge$/, screen: "knowledge", nav: "knowledge", title: "知识库" },
-    { re: /^\/settings$/, screen: "settings", nav: "settings", title: "集成与设置" },
+    { re: /^\/settings$/, screen: "settings", nav: "settings", title: "个人设置" },
+    { re: /^\/admin$/, screen: "admin", nav: "admin", title: "管理控制台" },
   ];
+
+  const NAV_NAMES = {
+    home: "工作台",
+    demands: "工作台",
+    tasks: "工作台",
+    docs: "交付工具",
+    crq: "交付工具",
+    charm: "交付工具",
+    queue: "自动化",
+    agents: "自动化",
+    knowledge: "空间",
+    settings: "空间",
+    admin: "管理",
+  };
 
   function parseHash() {
     let hash = location.hash.replace(/^#/, "") || "/home";
@@ -635,11 +829,7 @@
     return { path: hash, query: new URLSearchParams(query) };
   }
 
-  let lastScreen = null;
-  function render() {
-    SA.clearTimers();
-    document.getElementById("app").classList.remove("sidebar-open");
-    const { path, query } = parseHash();
+  function matchRoute(path) {
     let matched = null;
     let params = {};
     for (const r of routes) {
@@ -650,9 +840,135 @@
         break;
       }
     }
-    if (!matched) {
-      matched = routes.find((r) => r.screen === "home");
+    return { matched, params };
+  }
+  function currentRouteSpec() {
+    return matchRoute(parseHash().path).matched;
+  }
+  function routeTitle(spec) {
+    if (!spec) return "";
+    return SA.view === "business" && spec.titleBusiness ? spec.titleBusiness : spec.title || "";
+  }
+
+  /* 视角 / 权限驱动的应用壳：导航、用户卡、小组入口、执行器卡片 */
+  function applyShell() {
+    document.querySelectorAll(".nav__item").forEach((a) => {
+      const views = (a.dataset.view || "business it").split(/\s+/);
+      const cap = a.dataset.cap;
+      const visible = views.includes(SA.view) && (!cap || SA.auth.can(cap));
+      a.hidden = !visible;
+      const label = a.dataset[SA.view === "it" ? "labelIt" : "labelBusiness"];
+      const text = a.querySelector(".nav__text");
+      if (label && text) text.textContent = label;
+      // 折叠态：图标只显示 tooltip，把当前名称与计数写进 data-tip / aria-label
+      const badge = a.querySelector(".nav__badge");
+      const badgeText = badge ? badge.textContent.trim() : "";
+      const tip = (text ? text.textContent : a.dataset.tip || "") + (badgeText ? " · " + badgeText : "");
+      a.dataset.tip = tip;
+      a.setAttribute("aria-label", tip);
+    });
+    document.querySelectorAll(".nav__group").forEach((g) => {
+      const items = Array.from(g.querySelectorAll(".nav__item"));
+      g.hidden = items.length > 0 && items.every((i) => i.hidden);
+    });
+    const exec = document.querySelector(".executor-card");
+    if (exec) exec.hidden = SA.view !== "it";
+    const userRole = document.getElementById("user-role");
+    if (userRole) {
+      userRole.textContent =
+        SA.auth.account.groupName + " · " + (SA.view === "it" ? "SAP IT" : SA.auth.account.businessRole);
     }
+    const groupSwitch = document.getElementById("group-switch");
+    if (groupSwitch) {
+      groupSwitch.href = SA.auth.can("admin.access") ? "#/admin?tab=groups" : "#/settings?tab=account";
+      groupSwitch.dataset.tip = "我的小组 · " + SA.auth.account.groupName;
+    }
+    const userCard = document.querySelector(".user-card");
+    if (userCard) {
+      userCard.dataset.tip =
+        SA.auth.account.name + " · " + SA.auth.account.groupName + " · " + (SA.view === "it" ? "SAP IT" : SA.auth.account.businessRole);
+    }
+    const roleSwitch = document.querySelector(".role-switch");
+    if (roleSwitch) roleSwitch.hidden = SA.auth.account.views.length < 2;
+    document.querySelectorAll(".role-switch button").forEach((b) => {
+      b.classList.toggle("is-active", b.dataset.role === SA.view);
+    });
+  }
+
+  function viewGuard(spec) {
+    const label = SA.VIEW_META[SA.view].label;
+    return `
+      <div class="page page-guard">
+        <div class="guard-card">
+          <span class="guard-card__icon">${ic("eye")}</span>
+          <h1>当前视角不可用</h1>
+          <p>「${SA.h(spec.title || "")}」属于 SAP IT 工作台，${SA.h(label)}视角不提供该页面。</p>
+          <div class="row gap-2">
+            <button class="btn btn--primary" data-action="switch-view" data-view="it">切换到 SAP IT 视角</button>
+            <a class="btn" href="${SA.viewDefaultRoute()}">返回工作台</a>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  let lastScreen = null;
+  let renderToken = 0;
+
+  /** 给页面直接子元素注入交错序号 --i（上限 8），配合 app.css 的入场规则。 */
+  function applyStagger(root) {
+    if (SA.isShot || SA.isReducedMotion()) return;
+    const page = root.querySelector(".page");
+    if (!page) return;
+    const kids = page.children;
+    for (let k = 0; k < kids.length; k++) {
+      kids[k].style.setProperty("--i", String(Math.min(k, 8)));
+    }
+  }
+
+  function render() {
+    const token = ++renderToken;
+    SA.clearTimers();
+    closeOverlays();
+    document.getElementById("app").classList.remove("sidebar-open");
+    const { path, query } = parseHash();
+
+    // 演示参数：视角与成员预览（截图 / 分享链接用）
+    const viewParam = query.get("view");
+    if ((viewParam === "it" || viewParam === "business") && SA.auth.account.views.includes(viewParam)) {
+      SA.view = viewParam;
+      SA.data.user.role = viewParam === "it" ? "SAP IT" : SA.auth.account.businessRole;
+    }
+    // 权限预览：在管理控制台内保持，离开后恢复真实权限
+    const asParam = query.get("as");
+    if (asParam === "member") {
+      SA.auth.previewMember = true;
+      SA.auth.previewAdmin = null;
+    } else if (asParam === "groupadmin") {
+      SA.auth.previewMember = false;
+      SA.auth.previewAdmin = "group";
+    } else if (asParam === "platform") {
+      SA.auth.previewMember = false;
+      SA.auth.previewAdmin = null;
+    } else if (path !== "/admin") {
+      SA.auth.previewMember = false;
+      SA.auth.previewAdmin = null;
+    }
+
+    // 兼容 v2.1 的旧链接：设置页的管理 tab 收敛到管理控制台
+    if (path === "/settings") {
+      const tab = query.get("tab");
+      if (tab === "groups" || tab === "integration") {
+        location.replace("#/admin?tab=" + (tab === "groups" ? "groups" : "integrations"));
+        return;
+      }
+      if (tab === "security") {
+        location.replace("#/settings?tab=account");
+        return;
+      }
+    }
+
+    let { matched, params } = matchRoute(path);
+    if (!matched) matched = routes.find((r) => r.screen === "home");
     const spec = SA.screens[matched.screen];
     if (!spec) return;
 
@@ -665,18 +981,24 @@
 
     const view = isAuth ? auth : document.getElementById("view");
     const ctx = { params, query, path };
+    const guard = !isAuth && matched.views && !matched.views.includes(SA.view);
 
     const doRender = () => {
       let html = "";
-      try {
-        html = spec.render ? spec.render(ctx) : "";
-      } catch (e) {
-        console.error(e);
-        html = '<div class="page"><div class="callout">页面渲染失败：' + SA.h(e.message) + "</div></div>";
+      if (guard) {
+        html = viewGuard(matched);
+      } else {
+        try {
+          html = spec.render ? spec.render(ctx) : "";
+        } catch (e) {
+          console.error(e);
+          html = '<div class="page"><div class="callout">页面渲染失败：' + SA.h(e.message) + "</div></div>";
+        }
       }
       view.innerHTML = html;
+      applyStagger(view);
       hydrateIcons(view);
-      if (spec.after) {
+      if (!guard && spec.after) {
         try {
           spec.after(ctx, view);
         } catch (e) {
@@ -685,16 +1007,22 @@
       }
       SA.countUp(view);
       SA.animateBars(view);
-      if (window.scrollY) window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+      SA.scrollTop();
     };
 
     if (!isAuth) {
-      if (lastScreen && lastScreen !== matched.screen) {
+      applyShell();
+      view.classList.remove("is-leaving");
+      auth.classList.remove("is-leaving");
+      // 路由离场：时长与 CSS 共用 --dur-exit；reduced-motion 下为 0，直接渲染
+      const exitMs = SA.dur("--dur-exit");
+      if (!SA.isShot && exitMs > 0 && lastScreen && lastScreen !== matched.screen) {
         view.classList.add("is-leaving");
-        setTimeout(() => {
+        SA.after(() => {
+          if (token !== renderToken) return;
           view.classList.remove("is-leaving");
           doRender();
-        }, 90);
+        }, exitMs);
       } else {
         doRender();
       }
@@ -703,27 +1031,15 @@
         a.classList.toggle("is-active", a.dataset.nav === matched.nav);
       });
       const crumb = document.getElementById("crumb");
-      const navNames = {
-        home: "工作台",
-        demands: "工作台",
-        docs: "交付工具",
-        tasks: "工作台",
-        crq: "交付工具",
-        charm: "交付工具",
-        queue: "自动化",
-        agents: "自动化",
-        knowledge: "空间",
-        settings: "空间",
-      };
+      const title = routeTitle(matched);
       crumb.innerHTML =
-        '<span class="crumb__root">' + SA.h(navNames[matched.nav] || "Super Agent") + '</span><span class="crumb__sep">/</span><span class="crumb__now">' + SA.h(matched.title || "") + "</span>";
-      document.title = (matched.title || "Super Agent") + " · SAP Super Agent";
+        '<span class="crumb__root">' + SA.h(NAV_NAMES[matched.nav] || "Super Agent") + '</span><span class="crumb__sep">/</span><span class="crumb__now">' + SA.h(title) + "</span>";
+      document.title = (title || "Super Agent") + " · SAP Super Agent";
     } else {
       doRender();
       document.title = (spec.title ? spec.title + " · " : "") + "SAP Super Agent";
     }
     lastScreen = matched.screen;
-    closeOverlays();
   }
 
   /* ------------------------------------------------------------
@@ -763,6 +1079,7 @@
               '<div class="kv-row"><span class="kv-key">⌘ K</span><span class="kv-val">打开命令面板</span></div>' +
               '<div class="kv-row"><span class="kv-key">N</span><span class="kv-val">新建需求</span></div>' +
               '<div class="kv-row"><span class="kv-key">[</span><span class="kv-val">收起 / 展开侧栏</span></div>' +
+              '<div class="kv-row"><span class="kv-key">视角</span><span class="kv-val">顶栏切换 SAP 业务 / SAP IT</span></div>' +
               '<div class="kv-row"><span class="kv-key">Esc</span><span class="kv-val">关闭浮层</span></div>' +
               '<div class="kv-row"><span class="kv-key">G H</span><span class="kv-val">回到总览</span></div>' +
               '<div class="kv-row"><span class="kv-key">?</span><span class="kv-val">打开本帮助</span></div>' +
@@ -773,6 +1090,8 @@
           const menu = document.getElementById("profile-menu");
           menu.hidden = !menu.hidden;
           renderProfileMenu();
+        } else if (action === "switch-view") {
+          SA.setView(actionEl.dataset.view === "business" ? "business" : "it");
         } else if (action === "notif-go") {
           closeOverlays();
         }
@@ -791,13 +1110,7 @@
 
       const roleEl = e.target.closest("[data-role]");
       if (roleEl && roleEl.closest(".role-switch")) {
-        document.querySelectorAll(".role-switch button").forEach((b) => {
-          b.classList.toggle("is-active", b === roleEl);
-        });
-        SA.data.user.role = roleEl.dataset.role === "it" ? "SAP IT" : "SAP 业务";
-        SA.toast("已切换到 " + SA.data.user.role + " 视角", { icon: "user" });
-        if (location.hash !== "#/home") SA.go("#/home");
-        else render();
+        SA.setView(roleEl.dataset.role === "it" ? "it" : "business");
         return;
       }
 
@@ -874,16 +1187,19 @@
     const menu = document.getElementById("profile-menu");
     menu.innerHTML =
       '<div class="profile-menu__head"><div class="profile-menu__name">' +
-      SA.h(SA.data.user.name) +
+      SA.h(SA.auth.account.name) +
       '</div><div class="profile-menu__sub">' +
-      SA.h(SA.data.user.email) +
+      SA.h(SA.auth.account.email) +
       "</div></div>" +
-      '<a class="menu-item" href="#/settings?tab=security">' +
+      '<a class="menu-item" href="#/settings?tab=account">' +
       ic("fingerprint") +
       "账户与设备</a>" +
-      '<a class="menu-item" href="#/settings">' +
-      ic("settings") +
-      "集成与设置</a>" +
+      '<a class="menu-item" href="#/settings?tab=notify">' +
+      ic("bell") +
+      "通知规则</a>" +
+      (SA.auth.can("admin.access")
+        ? '<a class="menu-item" href="#/admin?tab=groups">' + ic("shield") + "管理控制台</a>"
+        : "") +
       '<a class="menu-item" href="#/welcome">' +
       ic("user-plus") +
       "重新注册 / 更换设备</a>" +
@@ -903,6 +1219,7 @@
     if (demandBadge) demandBadge.textContent = SA.data.demands.length;
     bindGlobal();
     if (!location.hash) location.hash = "#/home";
+    if (parseHash().query.get("collapse") === "1") document.getElementById("app").classList.add("is-collapsed");
     render();
     const bootParams = new URLSearchParams(location.search);
     if (bootParams.get("notif") === "1") {
@@ -910,7 +1227,7 @@
       openOverlay("notification-drawer");
     }
     if (bootParams.get("cmd") === "1") {
-      setTimeout(openCommand, 80);
+      SA.later(openCommand, 80);
     }
   });
 })();

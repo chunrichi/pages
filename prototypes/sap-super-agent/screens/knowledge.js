@@ -24,6 +24,7 @@
   SA.register("knowledge", {
     title: "知识库",
     render() {
+      const readOnly = SA.isReadOnly();
       return `
       <div class="page page-knowledge">
         <div class="page-head">
@@ -32,11 +33,17 @@
             <div class="page-head__title"><h1>知识库</h1><span class="pill pill--teal pill--lg">RAG</span></div>
             <p class="page-head__desc">AI 澄清、文档生成与评审引用都来自这里。索引状态、引用热度与检索质量都可观测。</p>
           </div>
-          <div class="page-head__actions">
+          ${
+            readOnly
+              ? ""
+              : `<div class="page-head__actions">
             <button class="btn">${ic("refresh")} 重建索引</button>
             <button class="btn btn--primary">${ic("upload")} 上传文档</button>
-          </div>
+          </div>`
+          }
         </div>
+
+        ${readOnly ? SA.readOnlyBar("业务方可以检索知识库，来源与索引由 SAP IT 维护。") : ""}
 
         <section class="metric-strip metric-strip--4">
           <div class="metric"><span>文档总数</span><b>147</b><em>5 个来源</em></div>
@@ -47,7 +54,7 @@
 
         <div class="kb-layout">
           <aside class="kb-sources card">
-            <div class="card-head"><h3>知识来源</h3><button class="icon-btn icon-btn--sm">${ic("plus")}</button></div>
+            <div class="card-head"><h3>知识来源</h3>${readOnly ? "" : '<button class="icon-btn icon-btn--sm">' + ic("plus") + "</button>"}</div>
             <div class="kb-source-list">
               ${SOURCES.map(
                 (s) => `
@@ -134,11 +141,17 @@
       root.querySelector("[data-action='kb-search']").addEventListener("click", (e) => {
         const btn = e.currentTarget;
         btn.classList.add("is-loading");
-        setTimeout(() => {
+        SA.sequence(() => {
           btn.classList.remove("is-loading");
           root.querySelectorAll(".kb-result__score").forEach((s) => {
             s.textContent = (0.78 + Math.random() * 0.18).toFixed(2);
           });
+          const results = root.querySelector(".kb-results");
+          if (results && !SA.isShot) {
+            results.classList.remove("anim-fade");
+            void results.offsetWidth;
+            results.classList.add("anim-fade");
+          }
           SA.toast("检索完成，命中 3 个分片", { icon: "search" });
         }, 700);
       });

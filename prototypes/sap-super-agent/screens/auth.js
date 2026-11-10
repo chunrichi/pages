@@ -140,7 +140,7 @@
         SA.data.user.name = name;
         SA.data.user.email = email;
         SA.toast("一次性链接已发送至 " + email, { icon: "mail" });
-        setTimeout(() => SA.go("#/verify"), 300);
+        SA.after(() => SA.go("#/verify"), 300);
       });
     },
   });
@@ -294,7 +294,7 @@
         if (!silent) SA.toast("设备绑定成功，下次访问将免登录", { icon: "fingerprint" });
       };
       if (SA.isShot) { finalize(true); return; }
-      setTimeout(() => finalize(false), 1400);
+      SA.sequence(() => finalize(false), 1400);
     },
   });
 
@@ -356,7 +356,7 @@
       root.querySelector("#rebind-form").addEventListener("submit", (e) => {
         e.preventDefault();
         SA.toast("重新绑定链接已发送", { icon: "mail" });
-        setTimeout(() => SA.go("#/verify"), 300);
+        SA.after(() => SA.go("#/verify"), 300);
       });
     },
   });

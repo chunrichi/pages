@@ -199,11 +199,18 @@
       </div>`;
     },
     after(ctx, root) {
+      function replay(el, cls) {
+        if (!el || SA.isShot) return;
+        el.classList.remove(cls);
+        void el.offsetWidth;
+        el.classList.add(cls);
+      }
       root.querySelectorAll("[data-ops-tab]").forEach((b) => {
         b.addEventListener("click", () => {
           root.querySelectorAll("[data-ops-tab]").forEach((x) => x.classList.remove("is-active"));
           b.classList.add("is-active");
           root.querySelectorAll("[data-ops-panel]").forEach((p) => (p.hidden = p.dataset.opsPanel !== b.dataset.opsTab));
+          replay(root.querySelector('[data-ops-panel="' + b.dataset.opsTab + '"]'), "anim-fade");
         });
       });
       root.querySelectorAll("[data-queue]").forEach((tr) => {
@@ -220,20 +227,25 @@
         const paused = btn.dataset.paused !== "1";
         btn.dataset.paused = paused ? "1" : "0";
         btn.innerHTML = paused ? ic("play") + " 恢复队列" : ic("pause") + " 暂停队列";
+        if (paused) stopLive();
+        else startLive();
         SA.toast(paused ? "队列已暂停，不再消费新消息" : "队列已恢复");
       });
-      // live event tail
-      if (!SA.isShot) {
-        const extra = [
-          { time: "10:42:24", type: "hook.delivered", subject: "teams-notify · R-2043", desc: "200 · 0.7s · externalId=ts_8843", tone: "green", icon: "check-circle" },
-          { time: "10:42:27", type: "task.updated", subject: "T-8841 · 进度 68%", desc: "Copilot 工具调用 · sap_report_progress", tone: "blue", icon: "monitor" },
-          { time: "10:42:31", type: "hook.delivered", subject: "jira-sync · R-2041", desc: "200 · 1.1s · externalId=SAP-1187", tone: "green", icon: "check-circle" },
-        ];
-        let idx = 0;
-        SA.onTimer(() => {
+      // live event tail / live depth：暂停队列时一并停表，恢复时重启
+      const extra = [
+        { time: "10:42:24", type: "hook.delivered", subject: "teams-notify · R-2043", desc: "200 · 0.7s · externalId=ts_8843", tone: "green", icon: "check-circle" },
+        { time: "10:42:27", type: "task.updated", subject: "T-8841 · 进度 68%", desc: "Copilot 工具调用 · sap_report_progress", tone: "blue", icon: "monitor" },
+        { time: "10:42:31", type: "hook.delivered", subject: "jira-sync · R-2041", desc: "200 · 1.1s · externalId=SAP-1187", tone: "green", icon: "check-circle" },
+      ];
+      let feedIdx = 0;
+      let eventTimer = null;
+      let depthTimer = null;
+      function startEventTail() {
+        if (eventTimer) return;
+        eventTimer = SA.onTimer(() => {
           const feed = root.querySelector("#event-feed");
-          if (!feed || idx >= extra.length) return;
-          const e = extra[idx++];
+          if (!feed || feedIdx >= extra.length) return;
+          const e = extra[feedIdx++];
           const div = document.createElement("div");
           div.className = "event-row anim-rise";
           div.innerHTML =
@@ -244,13 +256,23 @@
           feed.insertBefore(div, feed.firstChild);
         }, 3600);
       }
-      // live depth
-      if (!SA.isShot) {
-        SA.onTimer(() => {
+      function startDepth() {
+        if (depthTimer) return;
+        depthTimer = SA.onTimer(() => {
           const el = root.querySelector("[data-live-depth]");
           if (el) el.textContent = String(12 + Math.floor(Math.random() * 5));
         }, 5000);
       }
+      function startLive() {
+        if (SA.isShot) return;
+        startEventTail();
+        startDepth();
+      }
+      function stopLive() {
+        if (eventTimer) { SA.offTimer(eventTimer); eventTimer = null; }
+        if (depthTimer) { SA.offTimer(depthTimer); depthTimer = null; }
+      }
+      startLive();
     },
   });
 

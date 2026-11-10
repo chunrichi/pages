@@ -33,7 +33,7 @@ window.SHOWCASE = {
       slug: "sap-super-agent",
       title: "SAP Super Agent",
       summary:
-        "把 SAP 交付的每一个过程放在同一条线上：需求、AI 澄清、过程文档、CRQ / ChaRM、上线审批，外加一套 VSCode 插件。",
+        "把 SAP 交付的每一个过程放在同一条线上：需求、AI 澄清、过程文档、CRQ / ChaRM、上线审批，以及角色权限与管理控制台；另附一套 VSCode 插件。",
       category: "企业应用",
       status: "可交互",
       accent: "#2d5be3",
@@ -41,13 +41,14 @@ window.SHOWCASE = {
       screens: [
         "screenshots/home.png",
         "screenshots/vscode-chat.png",
-        "screenshots/demands-kanban.png"
+        "screenshots/admin-groups.png"
       ],
       updated: "2026-11-10",
-      tags: ["SAP", "AI Agent", "设计系统"],
+      tags: ["SAP", "AI Agent", "角色权限", "设计系统"],
       entries: [
         { label: "设计总览", path: "index.html" },
         { label: "Web 工作台", path: "app.html#/home" },
+        { label: "管理控制台", path: "app.html#/admin?tab=groups" },
         { label: "VSCode 插件", path: "vscode.html" }
       ],
       featured: true

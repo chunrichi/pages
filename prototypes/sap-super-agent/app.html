@@ -17,7 +17,7 @@
   <!-- ======================= SIDEBAR ======================= -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar__brand">
-      <a class="brand" href="#/home" aria-label="SAP Super Agent 首页">
+      <a class="brand rail-tip" href="#/home" aria-label="SAP Super Agent 首页" data-tip="Super Agent · SAP 交付工作台">
         <span class="brand__mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5 12 3l7 4.5v9L12 21l-7-4.5v-9Z" stroke="currentColor" stroke-width="1.6"/><path d="M8.6 10.2c1.9-1.3 4.9-1.3 6.8 0M8.6 13.8c1.9 1.3 4.9 1.3 6.8 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         </span>
@@ -31,46 +31,51 @@
       </button>
     </div>
 
-    <a class="group-switch group-switch--static" id="group-switch" href="#/settings?tab=groups" aria-label="查看小组管理">
+    <a class="group-switch group-switch--static rail-tip" id="group-switch" href="#/admin?tab=groups" aria-label="查看小组管理" data-tip="我的小组 · 财务共享组">
       <span class="group-switch__icon">FIN</span>
       <span class="group-switch__meta">
         <span class="group-switch__name">财务共享组</span>
-        <span class="group-switch__sub" title="当前账号唯一所属小组">FIN-SH · 12 位成员</span>
+        <span class="group-switch__sub" title="当前账号唯一所属小组">FIN-SH · 7 位成员</span>
       </span>
-      <span class="group-switch__manage" data-icon="chevron-right"></span>
+      <span class="group-switch__manage group-switch__chev" data-icon="chevron-right"></span>
     </a>
 
-    <button class="btn btn--primary sidebar__new" data-action="new-demand">
+    <button class="btn btn--primary sidebar__new rail-tip" data-action="new-demand" aria-label="新建需求" data-tip="新建需求 · N">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      新建需求
+      <span class="sidebar__new-label">新建需求</span>
       <kbd>N</kbd>
     </button>
 
     <nav class="nav" aria-label="主导航">
       <div class="nav__group">
         <div class="nav__label">工作台</div>
-        <a class="nav__item" data-nav="home" href="#/home"><span class="nav__icon" data-icon="home"></span><span class="nav__text">总览</span><span class="nav__badge" data-badge="inbox">2</span></a>
-        <a class="nav__item" data-nav="demands" href="#/demands"><span class="nav__icon" data-icon="layers"></span><span class="nav__text">需求</span><span class="nav__badge">6</span></a>
-        <a class="nav__item" data-nav="tasks" href="#/tasks"><span class="nav__icon" data-icon="inbox"></span><span class="nav__text">任务台</span><span class="nav__badge" data-badge="tasks">3</span></a>
+        <a class="nav__item rail-tip" data-nav="home" data-tip="总览" aria-label="总览" href="#/home"><span class="nav__icon" data-icon="home"></span><span class="nav__text">总览</span><span class="nav__badge" data-badge="inbox">2</span></a>
+        <a class="nav__item rail-tip" data-nav="demands" data-tip="需求" aria-label="需求" href="#/demands"><span class="nav__icon" data-icon="layers"></span><span class="nav__text">需求</span><span class="nav__badge">6</span></a>
+        <a class="nav__item rail-tip" data-nav="tasks" data-tip="任务台" aria-label="任务台" data-label-business="待我确认" data-label-it="任务台" href="#/tasks"><span class="nav__icon" data-icon="inbox"></span><span class="nav__text">任务台</span><span class="nav__badge" data-badge="tasks">3</span></a>
       </div>
 
       <div class="nav__group">
         <div class="nav__label">交付工具</div>
-        <a class="nav__item" data-nav="crq" href="#/tools/crq"><span class="nav__icon" data-icon="file-text"></span><span class="nav__text">CRQ 工单</span></a>
-        <a class="nav__item" data-nav="charm" href="#/tools/charm"><span class="nav__icon" data-icon="git-branch"></span><span class="nav__text">ChaRM 变更</span></a>
-        <a class="nav__item" data-nav="docs" href="#/demands/R-2041/doc/requirement-analysis"><span class="nav__icon" data-icon="book-open"></span><span class="nav__text">文档评审</span></a>
+        <a class="nav__item rail-tip" data-nav="docs" data-tip="文档评审" aria-label="文档评审" data-view="it" href="#/demands/R-2041/doc/requirement-analysis"><span class="nav__icon" data-icon="book-open"></span><span class="nav__text">文档评审</span></a>
+        <a class="nav__item rail-tip" data-nav="crq" data-tip="CRQ 工单" aria-label="CRQ 工单" data-view="it" href="#/tools/crq"><span class="nav__icon" data-icon="file-text"></span><span class="nav__text">CRQ 工单</span></a>
+        <a class="nav__item rail-tip" data-nav="charm" data-tip="ChaRM 变更" aria-label="ChaRM 变更" data-view="it" href="#/tools/charm"><span class="nav__icon" data-icon="git-branch"></span><span class="nav__text">ChaRM 变更</span></a>
       </div>
 
       <div class="nav__group">
         <div class="nav__label">自动化</div>
-        <a class="nav__item" data-nav="queue" href="#/ops/queue"><span class="nav__icon" data-icon="activity"></span><span class="nav__text">队列与事件</span><span class="nav__dot"></span></a>
-        <a class="nav__item" data-nav="agents" href="#/ops/agents"><span class="nav__icon" data-icon="bot"></span><span class="nav__text">Agent 运行</span></a>
+        <a class="nav__item rail-tip" data-nav="queue" data-tip="队列与事件" aria-label="队列与事件" data-view="it" href="#/ops/queue"><span class="nav__icon" data-icon="activity"></span><span class="nav__text">队列与事件</span><span class="nav__dot"></span></a>
+        <a class="nav__item rail-tip" data-nav="agents" data-tip="Agent 运行" aria-label="Agent 运行" data-view="it" href="#/ops/agents"><span class="nav__icon" data-icon="bot"></span><span class="nav__text">Agent 运行</span></a>
       </div>
 
       <div class="nav__group">
         <div class="nav__label">空间</div>
-        <a class="nav__item" data-nav="knowledge" href="#/knowledge"><span class="nav__icon" data-icon="database"></span><span class="nav__text">知识库</span></a>
-        <a class="nav__item" data-nav="settings" href="#/settings"><span class="nav__icon" data-icon="settings"></span><span class="nav__text">集成与设置</span></a>
+        <a class="nav__item rail-tip" data-nav="knowledge" data-tip="知识库" aria-label="知识库" href="#/knowledge"><span class="nav__icon" data-icon="database"></span><span class="nav__text">知识库</span></a>
+        <a class="nav__item rail-tip" data-nav="settings" data-tip="个人设置" aria-label="个人设置" href="#/settings"><span class="nav__icon" data-icon="settings"></span><span class="nav__text">个人设置</span></a>
+      </div>
+
+      <div class="nav__group" data-nav-group="admin">
+        <div class="nav__label">管理</div>
+        <a class="nav__item rail-tip" data-nav="admin" data-tip="管理控制台" aria-label="管理控制台" data-cap="admin.access" href="#/admin"><span class="nav__icon" data-icon="shield"></span><span class="nav__text">管理控制台</span></a>
       </div>
     </nav>
 
@@ -85,11 +90,11 @@
           <span class="executor-card__pill"><i></i>沈珂 · WSL-02</span>
         </div>
       </div>
-      <a class="user-card" href="#/settings?tab=security" aria-label="账户与设备">
+      <a class="user-card rail-tip" href="#/settings?tab=account" aria-label="账户与设备" data-tip="陈曦 · 财务共享组 · SAP 业务">
         <span class="avatar avatar--sm" data-tone="ink">陈</span>
         <span class="user-card__meta">
           <span class="user-card__name">陈曦</span>
-          <span class="user-card__role">财务共享组 · SAP 业务</span>
+          <span class="user-card__role" id="user-role">财务共享组 · SAP 业务</span>
         </span>
         <span class="user-card__chev" data-icon="chevrons-right"></span>
       </a>
@@ -102,7 +107,7 @@
   <div class="main" id="main">
     <header class="topbar" id="topbar">
       <div class="topbar__left">
-        <button class="icon-btn topbar__menu" data-action="toggle-sidebar" aria-label="菜单"><span data-icon="menu"></span></button>
+        <button class="icon-btn topbar__menu tooltip" data-action="toggle-sidebar" data-tip="展开侧栏 ( [ )" aria-label="展开侧栏"><span data-icon="menu"></span></button>
         <div class="crumb" id="crumb">
           <span class="crumb__root">Super Agent</span>
           <span class="crumb__sep">/</span>
@@ -230,6 +235,7 @@
 <script src="screens/charm.js"></script>
 <script src="screens/ops.js"></script>
 <script src="screens/settings.js"></script>
+<script src="screens/admin.js"></script>
 <script src="screens/knowledge.js"></script>
 <script src="assets/app.js"></script>
 </body>

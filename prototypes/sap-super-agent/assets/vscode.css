@@ -70,7 +70,7 @@
   font-weight: 520;
   color: var(--ink-3);
   white-space: nowrap;
-  transition: all var(--dur-1) ease;
+  transition: color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease);
 }
 .vs-viewbar button:hover {
   color: var(--ink);
@@ -484,6 +484,13 @@
   overflow-y: auto;
   background: #f4f4f1;
   min-height: 0;
+}
+/* 视图切换（render() 整体替换 innerHTML）：新插入的正文与侧栏各淡入一次。
+   只动 opacity（sa-fade / 220ms），不做位移，避免文字滑动。
+   不写 fill-mode：无延迟时入场即生效，结束后回到自然样式，截图不会被合成层改变字形渲染。 */
+#vs-sidebar > *,
+#vs-editor > * {
+  animation: sa-fade var(--dur-2) ease;
 }
 /* webview surface */
 .vsw {

@@ -396,17 +396,28 @@
       let step = 0;
       const panels = root.querySelectorAll("[data-panel]");
       const asides = root.querySelectorAll("[data-aside]");
+      /** 重触发一次工具类动画（元素已可见时 remove → reflow → add）。 */
+      function replay(el, cls) {
+        if (!el || SA.isShot) return;
+        el.classList.remove(cls);
+        void el.offsetWidth;
+        el.classList.add(cls);
+      }
       function goStep(n) {
         step = Math.max(0, Math.min(2, n));
         panels.forEach((p) => (p.hidden = Number(p.dataset.panel) !== step));
         asides.forEach((a) => (a.hidden = Number(a.dataset.aside) !== step));
+        replay(root.querySelector('[data-panel="' + step + '"]'), "anim-fade");
+        replay(root.querySelector('[data-aside="' + step + '"]'), "anim-fade");
         root.querySelectorAll("[data-step-indicator]").forEach((ind, i) => {
+          const wasDone = ind.classList.contains("is-done");
           ind.classList.toggle("is-current", i === step);
           ind.classList.toggle("is-done", i < step);
           const num = ind.querySelector(".wizard-step__num");
           num.innerHTML = i < step ? ic("check") : "0" + (i + 1);
+          if (i < step && !wasDone) replay(num, "anim-scale");
         });
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        SA.scrollTop({ smooth: true });
         if (step === 1) maybeAnimateChat();
       }
       const startStep = Number(ctx.query.get("step") || 0);
@@ -416,13 +427,12 @@
         const follow = root.querySelector("#ai-followup");
         if (follow && !follow.dataset.shown) {
           follow.dataset.shown = "1";
-          follow.style.opacity = "0";
-          setTimeout(() => {
-            follow.style.transition = "opacity .5s ease, transform .5s ease";
-            follow.style.transform = "translateY(6px)";
-            follow.style.opacity = "1";
-            follow.style.transform = "none";
-          }, 320);
+          follow.classList.add("is-pre-enter");
+          void follow.offsetWidth;
+          requestAnimationFrame(() => {
+            follow.classList.remove("is-pre-enter");
+            follow.classList.add("anim-rise");
+          });
         }
       }
       root.querySelectorAll("[data-step-go]").forEach((btn) => {
@@ -455,7 +465,7 @@
             return;
           }
           const chip = document.createElement("span");
-          chip.className = "owner-chip";
+          chip.className = "owner-chip anim-fade";
           chip.dataset.owner = name;
           chip.innerHTML =
             '<span class="avatar avatar--sm" data-tone="blue">' +
@@ -494,7 +504,7 @@
       root.querySelector("[data-action='re-clarify']").addEventListener("click", (e) => {
         const btn = e.currentTarget;
         btn.classList.add("is-loading");
-        setTimeout(() => {
+        SA.sequence(() => {
           btn.classList.remove("is-loading");
           SA.toast("已重新生成 3 个澄清问题", { icon: "sparkles" });
         }, 1100);
@@ -509,7 +519,7 @@
       root.querySelector("[data-action='submit-demand']").addEventListener("click", () => {
         const btn = root.querySelector("[data-action='submit-demand']");
         btn.classList.add("is-loading");
-        setTimeout(() => {
+        SA.sequence(() => {
           btn.classList.remove("is-loading");
           SA.modal({
             title: "需求已提交",

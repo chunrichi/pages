@@ -303,10 +303,14 @@ img, svg {
   animation: sa-scale-in var(--dur-3) var(--ease-out) both;
   animation-delay: var(--d, 0ms);
 }
+/* 让已经可见的元素先隐形，再配合 .anim-rise / .anim-fade 播一次入场 */
+.is-pre-enter {
+  opacity: 0;
+}
 
 .route-enter > * {
   animation: sa-rise var(--dur-4) var(--ease-out) both;
-  animation-delay: calc(var(--i, 0) * 45ms);
+  animation-delay: calc(var(--i, 0) * var(--stagger));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -314,8 +318,10 @@ img, svg {
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
 }
