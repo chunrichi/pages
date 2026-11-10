@@ -1,3 +1,6 @@
 .DS_Store
 node_modules/
 *.log
+
+# 原型内部交接文档不进入公开仓库
+prototypes/*/HANDOFF.md
